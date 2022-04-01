@@ -1,7 +1,7 @@
 # chess
 This is the Chess game, written in C for fun as a university project. Actually it still need lot of stuff to become fully playable, but you can still give a shoot and try to play as it is now ;) have fun!
 
-# How to compile on windows using Visual Studio Code:
+# How to compile using Visual Studio Code:
 
 > 1) Open the project folder in VS Code
 > 2) Make sure you installed LLVM for clang and copy the binaries from **SDL** and **SDLImage** those folders are inside **External/**
