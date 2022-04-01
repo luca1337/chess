@@ -66,7 +66,7 @@ static void select_cells(game_t *game)
                 // se è presente controllo il colore del giocatore che sia lo stesso
                 // delle pedine che sto selezionando per evitare di poter prendere
                 // scacchi che non appartengono al giocatore corrente
-                if (game->current_player->is_white)
+                if (game->current_player->is_white == current_chess_piece->is_white)
                 {
                     // arrivati quà siamo sicuri che la pedina sia presente all'interno
                     game->current_piece = current_chess_piece;
@@ -91,12 +91,21 @@ static void select_cells(game_t *game)
 
             if (found_cell)
             {
+                if (found_cell->is_occupied)
+                {
+                    game->current_player->score++;
+                }
+
                 piece_set_entity_null(game->board, old_piece_cell_index);
                 piece_set_entity_cell(game->board, game->current_piece, current_cell_index);
 
                 game->current_piece->set_position(game->current_piece, found_cell->pos_x, found_cell->pos_y);
 
                 game->current_piece->is_first_move = 0;
+
+                queue_enqueue(game->players_queue, game->current_player);
+                game->current_player = queue_peek(game->players_queue);
+                queue_dequeue(game->players_queue);
             }
             else
             {
@@ -130,6 +139,7 @@ void game_init(game_t *game)
     queue_enqueue(game->players_queue, black_player);
 
     game->current_player = queue_peek(game->players_queue);
+    queue_dequeue(game->players_queue);
 }
 
 void game_update(game_t *game)
