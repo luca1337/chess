@@ -1,0 +1,21 @@
+{
+    "files.associations": {
+        "sdl.h": "c",
+        "stdlib.h": "c",
+        "cstdlib": "c",
+        "context.h": "c",
+        "board.h": "c",
+        "color.h": "c",
+        "vec2.h": "c",
+        "texture.h": "c",
+        "utils.h": "c",
+        "chess_piece.h": "c",
+        "private.h": "c",
+        "events.h": "c",
+        "game.h": "c",
+        "queue.h": "c",
+        "player.h": "c",
+        "drawable.h": "c",
+        "texture_mgr.h": "c"
+    }
+}
