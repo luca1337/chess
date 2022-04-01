@@ -37,8 +37,7 @@ static texture_t *get_chess_texture(piece_type_t type, char is_white)
     // need another buffer to store the concatenation result
     char *path = (char *)malloc(total_buf_len);
     strcpy_s(path, total_buf_len, value);
-    strcat_s(path, total_buf_len,
-             is_white ? white_png_postfix : black_png_postfix);
+    strcat_s(path, total_buf_len, is_white ? white_png_postfix : black_png_postfix);
     // path[total_buf_len] = '\0';
 
     result = texture_load_from_file(path);
