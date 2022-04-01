@@ -4,7 +4,7 @@ This is the Chess game, written in C for fun as a university project. Actually i
 # How to compile on windows using Visual Studio Code:
 
 > 1) Open the project folder in VS Code
-> 2) Make sure you installed the latest LLVM for clang compiler and copy the binaries from **SDL** and **SDLImage** those folders are inside **External/**
+> 2) Make sure you installed LLVM for clang and copy the binaries from **SDL** and **SDLImage** those folders are inside **External/**
 > 3) Hit **CTRL + SHIFT + B** to compile it, the task will be called and the output will be generated inside **bin/** folder.
 > 4) F5 to launch with debugger or feel free to run it from it's folder!
 
