@@ -22,5 +22,6 @@
 .ionide
 
 # Support for Project snippet scope
+[Bb]in/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode
