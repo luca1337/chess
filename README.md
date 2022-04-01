@@ -8,4 +8,6 @@ This is the Chess game, written in C for fun as a university project. Actually i
 > 3) Hit **CTRL + SHIFT + B** to compile it (The output task will be automatically called and the output will be generated inside **bin/** folder)
 > 4) F5 to launch with debugger or feel free to run it from it's folder!
 
+----------------------------------------------------------------------------
+
 ![chess](https://user-images.githubusercontent.com/7602472/161291459-6f0a47d9-88bb-4b43-b320-9c73628ced95.png)
