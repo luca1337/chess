@@ -1,5 +1,5 @@
 # chess
-This is the Chess game, written in C for fun as a university project. Actually it still need lot of stuff to become fully playable, but you can still give a shoot and try to play as it is now ;) have fun!
+This is the Chess game, written in C using SDL for fun as a university project. Actually it still need lot of stuff to become fully playable, but you can still give a shoot and try to play as it is now ;) have fun!
 
 # How to compile using Visual Studio Code:
 
