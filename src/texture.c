@@ -125,15 +125,6 @@ texture_t *texture_load_from_file(const char *path)
     int width, height, color_channel;
     unsigned char *data = stbi_load(path, &width, &height, &color_channel, STBI_rgb_alpha);
 
-    // SDL_RendererInfo info;
-    // SDL_GetRendererInfo( (SDL_Renderer *)renderer->sdl_renderer, &info );
-    // printf("Renderer name: %s\n", info.name);
-    // printf("Renderer formats\n");
-    // for( Uint32 i = 0; i < info.num_texture_formats; i++ )
-    // {
-    //     printf(" %s ", SDL_GetPixelFormatName( info.texture_formats[i]));
-    // }
-
     texture->texture = SDL_CreateTexture((SDL_Renderer *)renderer->sdl_renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
 
     int pitch = 0;
@@ -165,6 +156,5 @@ void texture_destroy(texture_t *texture)
         SDL_DestroyTexture(texture->texture);
         SDL_free(texture->texture);
         free(texture);
-        texture = NULL;
     }
 }

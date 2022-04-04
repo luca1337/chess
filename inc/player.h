@@ -10,5 +10,6 @@ typedef struct player{
 }player_t;
 
 player_t* player_new(char is_white);
+void player_destroy(player_t* player);
 
 #endif

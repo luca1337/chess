@@ -10,5 +10,6 @@ typedef struct entity{
 }entity_t;
 
 entity_t* entity_new();
+void entity_destroy(entity_t* entity);
 
 #endif

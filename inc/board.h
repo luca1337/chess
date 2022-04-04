@@ -32,6 +32,7 @@ char is_cell_upper_bound(cell_t* cell);
 char is_cell_lower_bound(cell_t* cell);
 char is_cell_left_bound(cell_t* cell);
 char is_cell_right_bound(cell_t* cell);
+void cell_destroy(cell_t* cell);
 
 typedef struct board{
     entity_t* entity;
@@ -40,5 +41,6 @@ typedef struct board{
 }board_t;
 
 board_t* board_new();
+void board_destroy(board_t* board);
 
 #endif

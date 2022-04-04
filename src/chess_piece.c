@@ -10,18 +10,17 @@
 extern events_t *events;
 extern queue_t *texture_queue;
 
-// const char* folder_prefix = "assets/";
 const char *white_png_postfix = "_w.png";
 const char *black_png_postfix = "_b.png";
 
 const char *assets[7] = {
     "",
-    "../assets/rook",
-    "../assets/knight",
-    "../assets/bishop",
-    "../assets/queen",
-    "../assets/king",
-    "../assets/pawn",
+    "../assets/textures/rook",
+    "../assets/textures/knight",
+    "../assets/textures/bishop",
+    "../assets/textures/queen",
+    "../assets/textures/king",
+    "../assets/textures/pawn",
 };
 
 static texture_t *get_chess_texture(piece_type_t type, char is_white)
@@ -67,6 +66,13 @@ piece_move_t *piece_move_new()
     return move;
 }
 
+void piece_move_destroy(piece_move_t* move)
+{
+    cell_destroy(move->possible_cells);
+    texture_destroy(move->markers);
+    free(move);
+}
+
 static int get_matrix_index_from_piece_position(chess_piece_t* piece, int x_offset, int y_offset)
 {
     return (((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ) + x_offset) + (y_offset * CELLS_PER_ROW);
@@ -98,7 +104,7 @@ piece_move_t **_get_moves(struct chess_piece *piece, board_t *board)
 
         // se è la prima volta che muovo la pedina, posso suggerire due caselle in verticale ( solo x muovermi e non x mangiare )
         // invece le caselle in diagonale possono sempre essere suggerite in quanto servono solo per mangiare e non per spostarsi liberamente
-        index_queue = queue_new(diagonal_moves_count + vertical_moves_count, sizeof(int) * diagonal_moves_count + vertical_moves_count);
+        index_queue = queue_new(diagonal_moves_count + vertical_moves_count, sizeof(int) * (diagonal_moves_count + vertical_moves_count));
 
         // vertical squares
         int first_vert_idx = piece->is_white ? get_matrix_index_from_piece_position(piece, -0, -1) : get_matrix_index_from_piece_position(piece, +0, +1);
@@ -125,29 +131,25 @@ piece_move_t **_get_moves(struct chess_piece *piece, board_t *board)
 
             cell_t *current_cell = board->cells[matrix_index];
 
-            if (squareIdx < 2)
+            if (squareIdx < diagonal_moves_count)
             {
-                char skip_lateral_bounds = squareIdx == 0 ? is_piece_near_left_bound(piece) : is_piece_near_right_bound(piece);
+                char skip_lateral_bounds = squareIdx == 0 ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
 
                 // controllo se la pedina è ai bordi della matrice per evitare l'overflow
-                if (skip_lateral_bounds)
-                    continue;
-
-                // se la cella diagonale non esiste continuo
-                if (!current_cell)
+                if (skip_lateral_bounds || !current_cell)
                     continue;
 
                 // arrivati qui siamo sicuri che la cella digonale NON sia nulla
                 chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
 
                 // se la cella diagonale ha una pedina ed è del nostro stesso team o non esiste una pedina, non possiamo muoverci
-                if ((current_cell_piece && (current_cell_piece->is_white && is_white)) || !current_cell_piece)
+                if ((current_cell_piece && (current_cell_piece->is_white == is_white)) || !current_cell_piece)
                     continue;
             }
             else
             {
                 // se la prima cella è invalicabile o nulla rompo il ciclo
-                if ((squareIdx == 2 && !current_cell) || (squareIdx == 2 && current_cell->is_occupied))
+                if (current_cell->is_occupied)
                     break;
             }
 
@@ -181,7 +183,7 @@ piece_move_t **_get_moves(struct chess_piece *piece, board_t *board)
                 if ((is_queen || is_rook) && (move_direction == east || move_direction == west))
                 {
                     char is_east = move_direction == east;
-                    char is_queen_near_bounds = is_east ? is_piece_near_left_bound(piece) : is_piece_near_right_bound(piece);
+                    char is_queen_near_bounds = is_east ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
 
                     if (is_queen_near_bounds)
                         break;
@@ -218,7 +220,7 @@ piece_move_t **_get_moves(struct chess_piece *piece, board_t *board)
                 else if ((is_queen || is_bishop) && (move_direction == north_east || move_direction == north_west))
                 {
                     char is_north_east = move_direction == north_east;
-                    char is_queen_near_lateral_bounds = is_north_east ? is_piece_near_left_bound(piece) : is_piece_near_right_bound(piece);
+                    char is_queen_near_lateral_bounds = is_north_east ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
 
                     matrix_index = is_north_east ? (piece_index - 1) - CELLS_PER_ROW : (piece_index + 1) - CELLS_PER_ROW;
 
@@ -284,7 +286,7 @@ piece_move_t **_get_moves(struct chess_piece *piece, board_t *board)
                 else if ((is_queen || is_bishop) && (move_direction == south_west || move_direction == south_east))
                 {
                     char is_south_west = move_direction == south_west;
-                    char is_queen_near_lateral_bounds = is_south_west ? is_piece_near_right_bound(piece) : is_piece_near_left_bound(piece);
+                    char is_queen_near_lateral_bounds = is_south_west ? chess_piece_is_near_right_bound(piece) : chess_piece_is_near_left_bound(piece);
 
                     matrix_index = is_south_west ? (piece_index + 1) + CELLS_PER_ROW : (piece_index - 1) + CELLS_PER_ROW;
 
@@ -382,15 +384,14 @@ piece_move_t **_get_moves(struct chess_piece *piece, board_t *board)
                 if (possible_square < 0 || possible_square > (BOARD_SZ - 1))
                     break;
 
-                char is_east = move_direction == east;
-                char is_north_east = move_direction == north_east;
-                char is_south = move_direction == south;
-                char is_south_east = move_direction == south_east;
-
-                char is_north = move_direction == north;
-                char is_north_west = move_direction == north_west;
-                char is_west = move_direction == west;
-                char is_south_west = move_direction == south_west;
+                char is_east            = move_direction == east;
+                char is_north_east      = move_direction == north_east;
+                char is_south           = move_direction == south;
+                char is_south_east      = move_direction == south_east;
+                char is_north           = move_direction == north;
+                char is_north_west      = move_direction == north_west;
+                char is_west            = move_direction == west;
+                char is_south_west      = move_direction == south_west;
 
                 if ((is_east || is_north_east || is_south_east || is_south) && !is_knight_within_lateral_bound_left)
                      break;
@@ -422,6 +423,11 @@ piece_move_t **_get_moves(struct chess_piece *piece, board_t *board)
 
     // inizializzo un puntatore ad un puntatore di mosse da suggerire della grandezza che abbiamo calcolato
     moves = (piece_move_t **)calloc(available_moves, sizeof(piece_move_t *));
+    if (!moves)
+    {
+        fprintf(stderr, "Couldn't allocate memory for piece_move_t struct\n");
+        return NULL;
+    }
 
     for (size_t i = 0; i < available_moves; i++)
     {
@@ -435,7 +441,8 @@ piece_move_t **_get_moves(struct chess_piece *piece, board_t *board)
     }
 
     // libero la memoria che non utilizzo più per evitare mem leak!
-    // free(index_queue);
+    free(index_queue);
+    index_queue = NULL;
 
     piece->moves_number = available_moves;
 
@@ -458,7 +465,7 @@ chess_piece_t *chess_piece_new(piece_type_t type, char is_white)
     return piece;
 }
 
-void piece_set_entity_cell(board_t *board, chess_piece_t *piece, int index)
+void chess_piece_set_entity_cell(board_t *board, chess_piece_t *piece, int index)
 {
     if (CHECK_IDX_RANGE(index))
     {
@@ -470,7 +477,7 @@ void piece_set_entity_cell(board_t *board, chess_piece_t *piece, int index)
     board->cells[index]->is_occupied = TRUE;
 }
 
-void piece_set_entity_null(board_t *board, unsigned index)
+void chess_piece_set_entity_null(board_t *board, unsigned index)
 {
     if (CHECK_IDX_RANGE(index))
     {
@@ -482,22 +489,34 @@ void piece_set_entity_null(board_t *board, unsigned index)
     board->cells[index]->is_occupied = FALSE;
 }
 
-char is_piece_near_upper_bound(chess_piece_t *piece)
+char chess_piece_is_near_upper_bound(chess_piece_t *piece)
 {
     return piece != NULL && piece->pos_y == 0;
 }
 
-char is_piece_near_lower_bound(chess_piece_t *piece)
+char chess_piece_is_near_lower_bound(chess_piece_t *piece)
 {
     return piece != NULL && piece->pos_y == (SCREEN_H - CELL_SZ);
 }
 
-char is_piece_near_left_bound(chess_piece_t *piece)
+char chess_piece_is_near_left_bound(chess_piece_t *piece)
 {
     return piece != NULL && piece->pos_x == 0;
 }
 
-char is_piece_near_right_bound(chess_piece_t *piece)
+char chess_piece_is_near_right_bound(chess_piece_t *piece)
 {
     return piece != NULL && piece->pos_x == (SCREEN_W - CELL_SZ);
+}
+
+void chess_piece_destroy(chess_piece_t* piece)
+{
+    texture_destroy(piece->chess_texture);
+
+    for (size_t i = 0; i < piece->moves_number; i++)
+    {
+        piece_move_destroy(piece->moves[i]);
+    }
+    
+    free(piece);
 }

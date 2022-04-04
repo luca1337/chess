@@ -11,3 +11,9 @@ player_t* player_new(char is_white)
     player->is_white = is_white;
     return player;
 }
+
+void player_destroy(player_t* player)
+{
+    free(player->name);
+    free(player);
+}

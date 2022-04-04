@@ -54,6 +54,12 @@ char is_cell_right_bound(cell_t* cell)
     return cell != NULL && cell->pos_x == (SCREEN_W - CELL_SZ);
 }
 
+void cell_destroy(cell_t* cell)
+{
+    texture_destroy(cell->cell_texture);
+    entity_destroy(cell->entity);
+}
+
 static void _draw_board(struct board *board)
 {
     // braw board
@@ -143,4 +149,14 @@ board_t *board_new()
     }
 
     return board;
+}
+
+void board_destroy(board_t* board)
+{
+    for (size_t i = 0; i < BOARD_SZ; i++)
+    {
+        cell_destroy(board->cells[i]);
+    }
+
+    free(board);
 }

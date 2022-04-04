@@ -28,6 +28,7 @@ typedef struct piece_move{
 }piece_move_t;
 
 piece_move_t* piece_move_new();
+void piece_move_destroy(piece_move_t* move);
 
 // base class that every piece will inherit from
 typedef struct chess_piece{
@@ -46,11 +47,12 @@ typedef struct chess_piece{
 }chess_piece_t;
 
 chess_piece_t* chess_piece_new(piece_type_t type, char is_white);
-void piece_set_entity_cell(board_t* board, chess_piece_t* piece, int index);
-void piece_set_entity_null(board_t* board, unsigned index);
-char is_piece_near_upper_bound(chess_piece_t* piece);
-char is_piece_near_lower_bound(chess_piece_t* piece);
-char is_piece_near_left_bound(chess_piece_t* piece);
-char is_piece_near_right_bound(chess_piece_t* piece);
+void chess_piece_set_entity_cell(board_t* board, chess_piece_t* piece, int index);
+void chess_piece_set_entity_null(board_t* board, unsigned index);
+char chess_piece_is_near_upper_bound(chess_piece_t* piece);
+char chess_piece_is_near_lower_bound(chess_piece_t* piece);
+char chess_piece_is_near_left_bound(chess_piece_t* piece);
+char chess_piece_is_near_right_bound(chess_piece_t* piece);
+void chess_piece_destroy(chess_piece_t* piece);
 
 #endif

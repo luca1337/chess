@@ -4,22 +4,24 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_ttf.h>
 
 static uint64_t start = 0;
 static uint64_t end = 0;
 
-extern renderer_t *renderer;
-extern window_t *window;
 extern events_t *events;
 
-window_t *window_new(unsigned int width, unsigned int height, const char *title, int (*post_hook_render)())
+window_t *window_new(unsigned int width, unsigned int height, const char *title)
 {
-    window_t *win = (window_t *)malloc(sizeof(window_t));
-    memset(win, 0, sizeof(window_t));
-
-    // todo: check for nullptr
+    window_t *win = (window_t *)calloc(1, sizeof(window_t));
+    if (!win)
+    {
+        fprintf(stderr, "Could not create window\n");
+        return NULL;
+    }
 
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
     {
@@ -34,83 +36,81 @@ window_t *window_new(unsigned int width, unsigned int height, const char *title,
         return NULL;
     }
 
-    SDL_Surface* window_icon = IMG_Load("../assets/chess.png");
+    SDL_Surface *window_icon = IMG_Load("../assets/textures/chess.png");
     if (!window_icon)
     {
         printf("Couldn't load window icon: [%s]\n", SDL_GetError());
     }
-    SDL_SetWindowIcon((SDL_Window*)win->sdl_window, window_icon);
+    SDL_SetWindowIcon((SDL_Window *)win->sdl_window, window_icon);
 
     win->width = width;
     win->height = height;
-    win->post_hook_render = post_hook_render;
+
+    if (TTF_Init() != 0)
+    {
+        printf("Couldn't initialize TTF Engine: %s\n", SDL_GetError());
+        return NULL;
+    }
 
     return win;
 }
 
-renderer_t *renderer_new()
+renderer_t *renderer_new(window_t *window)
 {
-    renderer_t *renderer = (renderer_t *)malloc(sizeof(renderer_t));
-    memset(renderer, 0, sizeof(renderer_t));
+    renderer_t *rend = (renderer_t *)calloc(1, sizeof(renderer_t));
+    if (!rend)
+    {
+        fprintf(stderr, "Could not create renderer\n");
+        return NULL;
+    }
 
-    // todo: check for nullptr
-
-    renderer->sdl_renderer = SDL_CreateRenderer((SDL_Window *)window->sdl_window, -1, SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
-    if (!renderer->sdl_renderer)
+    rend->sdl_renderer = SDL_CreateRenderer((SDL_Window *)window->sdl_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (!rend->sdl_renderer)
     {
         printf("Couldn't initialize SDL renderer: [%s]\n", SDL_GetError());
         return NULL;
     }
 
     start = SDL_GetPerformanceFrequency();
-    renderer->is_running = 1;
+    rend->is_running = 1;
 
-    return renderer;
+    return rend;
 }
 
-int renderer_present()
+void renderer_update_events_and_delta_time(window_t *window, renderer_t *renderer)
 {
-    while (renderer->is_running)
+    SDL_PumpEvents();
+
+    // manage events better than this shit
+    SDL_Event ev;
+    while (SDL_PollEvent(&ev))
     {
-        SDL_PumpEvents();
-
-        // manage events better than this shit
-        SDL_Event ev;
-        while (SDL_PollEvent(&ev))
+        if (ev.type == SDL_QUIT)
         {
-            if (ev.type == SDL_QUIT)
-            {
-                renderer->is_running = 0;
-            }
-
-            update_events(events, &ev);
+            renderer->is_running = 0;
         }
 
-        // clear screen and add alpha blending
-        SDL_SetRenderDrawBlendMode((SDL_Renderer *)renderer->sdl_renderer, SDL_BLENDMODE_BLEND);
-        SDL_SetRenderDrawColor((SDL_Renderer *)renderer->sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear((SDL_Renderer *)renderer->sdl_renderer);
-
-        // update delta timing
-        end = SDL_GetPerformanceCounter();
-        window->delta_time = (float)((end - start) * 1000 / (float)SDL_GetPerformanceFrequency());
-        start = end;
-
-        // draw
-        window->post_hook_render();
-
-        SDL_RenderPresent((SDL_Renderer *)renderer->sdl_renderer);
+        update_events(events, &ev);
     }
 
-    // dispose contexts
-    context_destroy(window, renderer);
+    // clear screen and add alpha blending
+    SDL_SetRenderDrawBlendMode((SDL_Renderer *)renderer->sdl_renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawColor((SDL_Renderer *)renderer->sdl_renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear((SDL_Renderer *)renderer->sdl_renderer);
 
-    return 0;
+    // update delta timing
+    start = end;
+    end = SDL_GetPerformanceCounter();
+    window->delta_time = (float)(((end - start) * 100) / (float)SDL_GetPerformanceFrequency());
 }
 
-void context_destroy()
+void renderer_present(renderer_t *renderer)
+{
+    SDL_RenderPresent((SDL_Renderer *)renderer->sdl_renderer);
+}
+
+void context_destroy(window_t *window, renderer_t *renderer)
 {
     SDL_DestroyWindow((SDL_Window *)window->sdl_window);
     SDL_DestroyRenderer((SDL_Renderer *)renderer->sdl_renderer);
-    SDL_Quit();
 }

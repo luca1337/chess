@@ -16,6 +16,9 @@
         "queue.h": "c",
         "player.h": "c",
         "drawable.h": "c",
-        "texture_mgr.h": "c"
+        "texture_mgr.h": "c",
+        "sdl_ttf.h": "c",
+        "text.h": "c",
+        "scoreboard.h": "c"
     }
 }

@@ -10,3 +10,8 @@ entity_t* entity_new()
     memset(result, 0, sizeof(entity_t));
     return result;
 }
+
+void entity_destroy(entity_t* entity)
+{
+    free(entity);
+}

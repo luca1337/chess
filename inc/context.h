@@ -12,13 +12,13 @@ typedef struct window{
     char* title;
     float delta_time;
     void* sdl_window;
-    int(*post_hook_render)();
 }window_t;
 
-window_t* window_new(unsigned int width, unsigned int height, const char* title, int(*post_hook_render)());
+window_t* window_new(unsigned int width, unsigned int height, const char* title);
 
-renderer_t* renderer_new();
-int renderer_present();
-void context_destroy();
+renderer_t* renderer_new(window_t *window);
+void renderer_present(renderer_t* renderer);
+void renderer_update_events_and_delta_time(window_t* window, renderer_t* renderer);
+void context_destroy(window_t* window, renderer_t* renderer);
 
 #endif
