@@ -6,6 +6,7 @@
 #include "texture.h"
 #include "board.h"
 #include "player.h"
+#include "queue.h"
 
 // which direction do we want to move on ?
 typedef enum move_direction{
@@ -36,6 +37,8 @@ typedef struct chess_piece{
     piece_type_t piece_type;
     texture_t* chess_texture;
     piece_move_t** moves;
+    queue_t* index_queue;
+    int* possible_squares;
     int moves_number;
     char is_white;
     char is_killed;
@@ -43,8 +46,17 @@ typedef struct chess_piece{
     int pos_x, pos_y;
     void(*draw)(struct chess_piece* piece);
     void(*set_position)(struct chess_piece* piece, int x, int y);
-    piece_move_t**(*get_moves)(struct chess_piece* piece, board_t* board);
+    char(*generate_legal_moves)(struct chess_piece* piece, board_t* board);
+    char(*check_checkmate)(board_t* board, struct chess_piece* piece, cell_t* destination);
 }chess_piece_t;
+
+// piece movements
+char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate);
+char get_knight_legal_moves(chess_piece_t* piece, board_t* board, char simulate);
+char get_queen_legal_moves(chess_piece_t* piece, board_t* board, char simulate);
+char get_rook_legal_moves(chess_piece_t* piece, board_t* board, char simulate);
+char get_bishop_legal_moves(chess_piece_t* piece, board_t* board, char simulate);
+char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate);
 
 chess_piece_t* chess_piece_new(piece_type_t type, char is_white);
 void chess_piece_set_entity_cell(board_t* board, chess_piece_t* piece, int index);
@@ -54,5 +66,6 @@ char chess_piece_is_near_lower_bound(chess_piece_t* piece);
 char chess_piece_is_near_left_bound(chess_piece_t* piece);
 char chess_piece_is_near_right_bound(chess_piece_t* piece);
 void chess_piece_destroy(chess_piece_t* piece);
+const char* chess_piece_to_string(chess_piece_t* piece);
 
 #endif

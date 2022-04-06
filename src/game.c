@@ -78,7 +78,7 @@ static void handle_chess_piece_selection(game_t *game)
                     old_pos_x = game->current_piece->pos_x;
                     old_pos_y = game->current_piece->pos_y;
 
-                    game->current_piece->moves = game->current_piece->get_moves(game->current_piece, game->board);
+                    game->current_piece->generate_legal_moves(game->current_piece, game->board);
                 }
             }
         }
@@ -138,6 +138,7 @@ game_t *game_new()
         fprintf(stderr, "Couldn't create game state!\n");
         return NULL;
     }
+    memset(game, 0, sizeof(game_t));
     return game;
 }
 
