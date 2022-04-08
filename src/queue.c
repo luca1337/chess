@@ -1,4 +1,5 @@
 #include "queue.h"
+#include "private.h"
 
 static char is_empty(queue_t* queue)
 {
@@ -12,8 +13,8 @@ static char is_full(queue_t* queue)
 
 queue_t* queue_new(size_t size, size_t allocation_size)
 {
-    queue_t* queue = (queue_t*)malloc(sizeof(queue_t));
-    memset(queue, 0, sizeof(queue_t));
+    queue_t* queue = (queue_t*)calloc(1, sizeof(queue_t));
+    CHECK(queue, NULL, "Couldn't allocate memory for queue");
 
     queue->data = (void*)malloc(allocation_size);
     queue->rear = -1;

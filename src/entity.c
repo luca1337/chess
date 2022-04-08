@@ -1,4 +1,5 @@
 #include "entity.h"
+#include "private.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -6,8 +7,8 @@
 
 entity_t* entity_new()
 {
-    entity_t* result = (entity_t*)malloc(sizeof(entity_t));
-    memset(result, 0, sizeof(entity_t));
+    entity_t* result = (entity_t*)calloc(1, sizeof(entity_t));
+    CHECK(result, NULL, "Couldn't allocate memory for entity struct");
     return result;
 }
 

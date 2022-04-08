@@ -20,11 +20,7 @@ static void _draw_cell(cell_t *cell)
 cell_t *cell_new(vec2_t pos, vec2_t sz, color_t draw_color)
 {
     cell_t *cell = (cell_t *)calloc(1, sizeof(cell_t));
-    if (!cell)
-    {
-        fprintf(stderr, "Couldn't allocate enought bytes for cell struct: [%s]", SDL_GetError());
-        return NULL;
-    }
+    CHECK(cell, NULL, "Couldn't allocate enought bytes for cell struct");
 
     cell->cell_texture = texture_create_raw(sz.xy[0], sz.xy[1], draw_color);
     cell->cell_texture->set_position(cell->cell_texture, pos.xy[0], pos.xy[1]);
@@ -62,15 +58,19 @@ void cell_destroy(cell_t* cell)
 
 static void _draw_board(struct board *board)
 {
-    // braw board
+    // draw board
     for (unsigned long cellIndex = 0ul; cellIndex != BOARD_SZ; ++cellIndex)
     {
         cell_t *current_cell = board->cells[cellIndex];
-        current_cell->draw(current_cell);
+
+        if (current_cell != NULL)
+        {
+            current_cell->draw(current_cell);
+        }
     }
 
     // draw pieces
-    for (size_t chessIndex = 0; chessIndex < BOARD_SZ; chessIndex++)
+    for (unsigned long chessIndex = 0ul; chessIndex < BOARD_SZ; chessIndex++)
     {
         chess_piece_t *current_piece = (chess_piece_t *)board->cells[chessIndex]->entity;
 
@@ -91,12 +91,8 @@ static void create_chess_piece(board_t *board, unsigned index, vec2_t position, 
 
 board_t *board_new()
 {
-    board_t *board = (board_t *)malloc(sizeof(board_t));
-    if (!board)
-    {
-        fprintf(stderr, "Could not create board...\n");
-        return NULL;
-    }
+    board_t *board = (board_t *)calloc(1, sizeof(board_t));
+    CHECK(board, NULL, "Could not allocate memory for board");
 
     board->draw = _draw_board;
 
@@ -134,7 +130,7 @@ board_t *board_new()
             piece_type_t type       = (piece_type_t)board_matrix_value;
             char is_upper_board     = cell_index <= NUM_OF_CHESS_PIECES;
 
-            // piazziamo gli scacchi:
+            // place down chess pieces:
             switch (board_matrix_value)
             {
             default:                                                                              break;

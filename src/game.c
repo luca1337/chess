@@ -7,14 +7,14 @@
 #include <string.h>
 
 // GLOBALS
-window_t *window        = NULL;
-renderer_t *renderer    = NULL;
-events_t *events        = NULL;
-queue_t *texture_queue  = NULL;
+window_t *window            = NULL;
+renderer_t *renderer        = NULL;
+events_t *events            = NULL;
+queue_t *texture_queue      = NULL;
 
-int old_pos_x = 0;
-int old_pos_y = 0;
-int old_piece_cell_index = 0;
+int old_pos_x               = 0;
+int old_pos_y               = 0;
+int old_piece_cell_index    = 0;
 
 static void recycle_textures(chess_piece_t *piece)
 {
@@ -33,7 +33,7 @@ static cell_t *find_matching_cell(game_t *game, size_t cell_index)
     {
         cell_t *result = game->board->cells[cell_index];
 
-        for (size_t i = 0; i != game->current_piece->moves_number; ++i)
+        for (unsigned long i = 0ul; i != game->current_piece->moves_number; ++i)
         {
             if (!memcmp(game->current_piece->moves[i]->possible_cells, result, sizeof(cell_t)))
             {
@@ -133,12 +133,8 @@ static void handle_chess_piece_selection(game_t *game)
 game_t *game_new()
 {
     game_t* game = (game_t*)calloc(1, sizeof(game_t));
-    if (!game)
-    {
-        fprintf(stderr, "Couldn't create game state!\n");
-        return NULL;
-    }
-    memset(game, 0, sizeof(game_t));
+    CHECK(game, NULL, "Couldn't allocate memory for game struct");
+
     return game;
 }
 
@@ -151,7 +147,7 @@ void game_init(game_t *game)
 
     // Create texture pool for later use
     texture_queue = queue_new(TEXTURE_POOL_SIZE, sizeof(texture_t) * TEXTURE_POOL_SIZE);
-    for (size_t i = 0; i != TEXTURE_POOL_SIZE; ++i)
+    for (unsigned long i = 0ul; i != TEXTURE_POOL_SIZE; ++i)
     {
         queue_enqueue(texture_queue, texture_load_from_file("../assets/textures/dot.png"));
     }
@@ -200,15 +196,16 @@ void game_update(game_t *game)
         {
             if (game->current_piece && game->current_piece->moves)
             {
-                for (size_t i = 0; i < game->current_piece->moves_number; i++)
+                for (unsigned long i = 0ul; i < game->current_piece->moves_number; ++i)
                 {
-                    game->current_piece->moves[i]->markers->render(game->current_piece->moves[i]->markers, TRUE, 115, NULL);
+                    game->current_piece->moves[i]->markers->render(game->current_piece->moves[i]->markers, TRUE, SDL_ALPHA_OPAQUE / 2, NULL);
                 }
             }
         }
 
         // --- END DRAW OBJECTS ---
 
+        // present to screen
         renderer_present(renderer);
     }
 

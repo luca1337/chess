@@ -13,7 +13,6 @@ void scoreboard_new(scoreboard_t* scoreboard)
     scoreboard->black_player_score = text_new("../assets/fonts/Lato-Black.ttf", 16, "Black score: 0", BLACK);
 }
 
-
 void scoreboard_update(scoreboard_t* scoreboard, player_t* player)
 {
     char update_white_score = player && player->is_white;

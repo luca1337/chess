@@ -79,17 +79,20 @@ static int get_cell_index_by_piece_position(chess_piece_t* piece, int x_offset, 
 
 static char allocate_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 {
-    // esco se non ho mosse disponibili, sono bloccato
+    // if no moves are available simply go out and this pawn cannot move.
     if (piece->moves_number == 0)
         return FALSE;
 
-    // inizializzo un puntatore ad un puntatore di mosse da suggerire della grandezza che abbiamo calcolato
+    // We distinguish the simulation because, in this case, we only care abouts "indexes" of the board
+    // that the pawn could go if moved.
     if (simulate)
     {
         piece->possible_squares = (int*)calloc(piece->moves_number, sizeof(int) * piece->moves_number);
+        CHECK(piece->possible_squares, NULL, "Couldn't allocate memory for piece->possible_squares");
+
         for (size_t i = 0; i < piece->moves_number; i++)
         {
-            int index = queue_peek(piece->index_queue);
+            const int index = queue_peek(piece->index_queue);
             piece->possible_squares[i] = index;
             queue_dequeue(piece->index_queue);
         }
@@ -97,11 +100,7 @@ static char allocate_legal_moves(chess_piece_t* piece, board_t* board, char simu
     else
     {
         piece->moves = (piece_move_t **)calloc(piece->moves_number, sizeof(piece_move_t *));
-        if (!piece->moves)
-        {
-            fprintf(stderr, "Couldn't allocate memory for piece_move_t struct\n");
-            return FALSE;
-        }
+        CHECK(piece->moves, NULL, "Couldn't allocate memory for piece->moves ");
 
         for (size_t i = 0; i < piece->moves_number; i++)
         {
@@ -123,11 +122,11 @@ char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     // reset variables
     piece->moves_number = 0;
 
-    char is_first_move = piece->is_first_move;
-    char is_white = piece->is_white;
+    const char is_first_move = piece->is_first_move;
+    const char is_white = piece->is_white;
 
     // matrice in indici verticali
-    int vertical_moves_count = is_first_move ? 2 : 1;
+    const int vertical_moves_count = is_first_move ? 2 : 1;
     const int diagonal_moves_count = 2;
 
     // se è la prima volta che muovo la pedina, posso suggerire due caselle in verticale ( solo x muovermi e non x mangiare )
@@ -135,14 +134,14 @@ char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     piece->index_queue = queue_new(diagonal_moves_count + vertical_moves_count, sizeof(int) * (diagonal_moves_count + vertical_moves_count));
 
     // vertical squares
-    int first_vert_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -0, -1) : get_cell_index_by_piece_position(piece, +0, +1);
-    int second_vert_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -0, -2) : get_cell_index_by_piece_position(piece, +0, +2);
+    const int first_vert_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -0, -1) : get_cell_index_by_piece_position(piece, +0, +1);
+    const int second_vert_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -0, -2) : get_cell_index_by_piece_position(piece, +0, +2);
 
     // diagonal squares
-    int diagonal_left_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -1, -1) : get_cell_index_by_piece_position(piece, -1, +1);
-    int diagonal_right_idx = piece->is_white ? get_cell_index_by_piece_position(piece, +1, -1) : get_cell_index_by_piece_position(piece, +1, +1);
+    const int diagonal_left_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -1, -1) : get_cell_index_by_piece_position(piece, -1, +1);
+    const int diagonal_right_idx = piece->is_white ? get_cell_index_by_piece_position(piece, +1, -1) : get_cell_index_by_piece_position(piece, +1, +1);
 
-    int possible_squares[] = {
+    const int possible_squares[] = {
         diagonal_left_idx,
         diagonal_right_idx,
         first_vert_idx,
@@ -152,7 +151,7 @@ char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     // verticale e diagonale
     for (size_t squareIdx = 0; squareIdx != (diagonal_moves_count + vertical_moves_count); squareIdx++)
     {
-        int matrix_index = possible_squares[squareIdx];
+        const int matrix_index = possible_squares[squareIdx];
 
         if (matrix_index < 0 || matrix_index > (BOARD_SZ - 1))
             continue;
@@ -161,14 +160,14 @@ char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
         if (squareIdx < diagonal_moves_count)
         {
-            char skip_lateral_bounds = squareIdx == 0 ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
+            const char skip_lateral_bounds = squareIdx == 0 ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
 
             // controllo se la pedina è ai bordi della matrice per evitare l'overflow
             if (skip_lateral_bounds || !current_cell)
                 continue;
 
             // arrivati qui siamo sicuri che la cella digonale NON sia nulla
-            chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
+            const chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
 
             // se la cella diagonale ha una pedina ed è del nostro stesso team o non esiste una pedina, non possiamo muoverci
             if ((current_cell_piece && (current_cell_piece->is_white == is_white)) || !current_cell_piece)
@@ -203,23 +202,23 @@ char get_knight_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     piece->index_queue = queue_new(max_moves, sizeof(int) * max_moves);
 
     // up left, left up
-    int left_up_idx = get_cell_index_by_piece_position(piece, -2, -1);
-    int up_left_idx = get_cell_index_by_piece_position(piece, -1, -2);
+    const int left_up_idx = get_cell_index_by_piece_position(piece, -2, -1);
+    const int up_left_idx = get_cell_index_by_piece_position(piece, -1, -2);
 
     // up right, right up
-    int up_right_idx = get_cell_index_by_piece_position(piece, +1, -2);
-    int right_up_idx = get_cell_index_by_piece_position(piece, +2, -1);
+    const int up_right_idx = get_cell_index_by_piece_position(piece, +1, -2);
+    const int right_up_idx = get_cell_index_by_piece_position(piece, +2, -1);
 
     // right down, down right
-    int right_down_idx = get_cell_index_by_piece_position(piece, +2, +1);
-    int down_right_idx = get_cell_index_by_piece_position(piece, +1, +2);
+    const int right_down_idx = get_cell_index_by_piece_position(piece, +2, +1);
+    const int down_right_idx = get_cell_index_by_piece_position(piece, +1, +2);
 
     // down left, left down
-    int down_left_idx = get_cell_index_by_piece_position(piece, -1, +2);
-    int left_down_idx = get_cell_index_by_piece_position(piece, -2, +1);
+    const int down_left_idx = get_cell_index_by_piece_position(piece, -1, +2);
+    const int left_down_idx = get_cell_index_by_piece_position(piece, -2, +1);
 
-    char is_knight_within_lateral_bound_left = piece->pos_x >= 128;
-    char is_knight_within_lateral_bound_right = piece->pos_x <= 320;
+    const char is_knight_within_lateral_bound_left = piece->pos_x >= 128;
+    const char is_knight_within_lateral_bound_right = piece->pos_x <= 320;
 
     move_direction_t move_direction = east;
     while (move_direction != MAX_DIR)
@@ -244,14 +243,14 @@ char get_knight_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             if (possible_square < 0 || possible_square > (BOARD_SZ - 1))
                 break;
 
-            char is_east            = move_direction == east;
-            char is_north_east      = move_direction == north_east;
-            char is_south           = move_direction == south;
-            char is_south_east      = move_direction == south_east;
-            char is_north           = move_direction == north;
-            char is_north_west      = move_direction == north_west;
-            char is_west            = move_direction == west;
-            char is_south_west      = move_direction == south_west;
+            const char is_east            = move_direction == east;
+            const char is_north_east      = move_direction == north_east;
+            const char is_south           = move_direction == south;
+            const char is_south_east      = move_direction == south_east;
+            const char is_north           = move_direction == north;
+            const char is_north_west      = move_direction == north_west;
+            const char is_west            = move_direction == west;
+            const char is_south_west      = move_direction == south_west;
 
             if (is_south && !(piece->pos_x >= 64))
                 break;
@@ -574,7 +573,7 @@ char get_bishop_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     // indice corrente della pedina nella matrice 8x8
     int piece_index = ((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ);
 
-    move_direction_t move_directions[4] = { north_east, north_west, south_east, south_west };
+    const move_direction_t move_directions[4] = { north_east, north_west, south_east, south_west };
 
     int step = 1;
     for (unsigned long dirIdx = 0ul; dirIdx != _countof(move_directions); ++dirIdx)
@@ -672,24 +671,22 @@ char get_bishop_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
 char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 {
-    // the king can move either on adjacent or beside cells
-    // the important thhing is that the king must not be under attack
-    // otherwise the king will be under checkmate
-
+    // the king can move to adjacent cells in all directions, by one square.
     piece->moves_number = 0;
 
     const int max_moves = 8;
 
     piece->index_queue = queue_new(max_moves, sizeof(int) * max_moves);
 
-    int lefx_idx        = get_cell_index_by_piece_position(piece, -1, -0);
-    int up_left_idx     = get_cell_index_by_piece_position(piece, -1, -1);
-    int up_idx          = get_cell_index_by_piece_position(piece, -0, -1);
-    int up_right_idx    = get_cell_index_by_piece_position(piece, +1, -1);
-    int right_idx       = get_cell_index_by_piece_position(piece, +1, +0);
-    int down_right_idx  = get_cell_index_by_piece_position(piece, +1, +1);
-    int down_idx        = get_cell_index_by_piece_position(piece, +0, +1);
-    int down_left_idx   = get_cell_index_by_piece_position(piece, -1, +1);
+    // precalculate possible squares
+    const int lefx_idx        = get_cell_index_by_piece_position(piece, -1, -0);
+    const int up_left_idx     = get_cell_index_by_piece_position(piece, -1, -1);
+    const int up_idx          = get_cell_index_by_piece_position(piece, -0, -1);
+    const int up_right_idx    = get_cell_index_by_piece_position(piece, +1, -1);
+    const int right_idx       = get_cell_index_by_piece_position(piece, +1, +0);
+    const int down_right_idx  = get_cell_index_by_piece_position(piece, +1, +1);
+    const int down_idx        = get_cell_index_by_piece_position(piece, +0, +1);
+    const int down_left_idx   = get_cell_index_by_piece_position(piece, -1, +1);
 
     move_direction_t move_direction = east;
     while (move_direction != MAX_DIR)
@@ -711,12 +708,12 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             case south_east:    possible_square     = down_left_idx;    break;
             }
 
-            char is_east            = move_direction == east;
-            char is_north_east      = move_direction == north_east;
-            char is_south_east      = move_direction == south_east;
-            char is_north_west      = move_direction == north_west;
-            char is_west            = move_direction == west;
-            char is_south_west      = move_direction == south_west;
+            const char is_east            = move_direction == east;
+            const char is_north_east      = move_direction == north_east;
+            const char is_south_east      = move_direction == south_east;
+            const char is_north_west      = move_direction == north_west;
+            const char is_west            = move_direction == west;
+            const char is_south_west      = move_direction == south_west;
 
             if ((is_east || is_north_east || is_south_east) && chess_piece_is_near_left_bound(piece))
                     break;
@@ -727,30 +724,34 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             if (possible_square < 0 || possible_square > (BOARD_SZ - 1))
                 break;
 
-            cell_t *current_cell = board->cells[possible_square];
+            cell_t *const current_cell = board->cells[possible_square];
 
             // check checkmate: to implement a check checkmate algorithm, we need to check for each piece present on the board
             // if it can occupy one of the hypotetical available cells for the king
 
-            chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
+            const chess_piece_t *const current_cell_piece = (chess_piece_t *)current_cell->entity;
 
             if (!current_cell->is_occupied || (current_cell->is_occupied && ((current_cell_piece->is_white != piece->is_white))))
             {
-                // only here the king could move but we must check if that cell will turn him into checkmate
-                // we must iterate over all the enemies' pawns and check whether they could reach this cell
-                for (size_t i = 0; i != BOARD_SZ; ++i)
+                // this statement because when the piece currently checked it's a king then this function will be called recursively
+                if (!simulate)
                 {
-                    chess_piece_t *enemy_pc = (chess_piece_t *)board->cells[i]->entity;
+                    // only here the king could move but we must check if that cell will turn him into checkmate
+                    // we must iterate over all the enemies' pawns and check whether they could reach this cell
+                    for (unsigned long cellIdx = 0ul; cellIdx != BOARD_SZ; ++cellIdx)
+                    {
+                        chess_piece_t *enemy_pc = (chess_piece_t *)board->cells[cellIdx]->entity;
 
-                    if (!enemy_pc)
-                        continue;
+                        if (!enemy_pc)
+                            continue;
 
-                    if (piece->is_white == enemy_pc->is_white)
-                        continue;
+                        if (piece->is_white == enemy_pc->is_white)
+                            continue;
 
-                    // we stop everytime a enemy piece can move in the same cell that the king wants to move
-                    if (enemy_pc->check_checkmate(board, enemy_pc, current_cell))
-                        goto exit_loop; // jmp
+                        // we stop everytime a enemy piece can move in the same cell that the king could move to
+                        if (enemy_pc->check_checkmate(board, enemy_pc, current_cell))
+                            goto exit_loop; // jmp
+                    }
                 }
                 
                 queue_enqueue(piece->index_queue, possible_square);
@@ -772,15 +773,17 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 char _generate_legal_moves(struct chess_piece *piece, board_t *board)
 {
     // algoritmi di ricerca celle disponibili
+
+    const char should_simulate = FALSE;
     switch (piece->piece_type)
     {
     default:        break;
-    case rook:      return get_rook_legal_moves(piece, board, FALSE);
-    case knight:    return get_knight_legal_moves(piece, board, FALSE);
-    case bishop:    return get_bishop_legal_moves(piece, board, FALSE);
-    case queen:     return get_queen_legal_moves(piece, board, FALSE);
-    case king:      return get_king_legal_moves(piece, board, FALSE);
-    case pawn:      return get_pawn_legal_moves(piece, board, FALSE);
+    case rook:      return get_rook_legal_moves(piece, board, should_simulate);
+    case knight:    return get_knight_legal_moves(piece, board, should_simulate);
+    case bishop:    return get_bishop_legal_moves(piece, board, should_simulate);
+    case queen:     return get_queen_legal_moves(piece, board, should_simulate);
+    case king:      return get_king_legal_moves(piece, board, should_simulate);
+    case pawn:      return get_pawn_legal_moves(piece, board, should_simulate);
     }
 
     return FALSE;
@@ -788,47 +791,47 @@ char _generate_legal_moves(struct chess_piece *piece, board_t *board)
 
 char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destination)
 {
-    // the checkmate algorithm it's nothing more than a simulation of a legal move algorithm
+    // the checkmate algorithm it's nothing more than a simulation of the legal move's one
     // for every enemy piece that could potentially reach any of the king's cell, so we call
-    // get_piece_legal_moves for every possible enemy piece on the board and it's done.
+    // get_piece_legal_moves it's done.
 
-    piece_type_t piece_type = piece->piece_type;
-    char should_simulate = TRUE;
+    const char should_simulate = TRUE;
+    const piece_type_t piece_type = piece->piece_type;
     char should_check = FALSE;
 
     switch (piece_type)
     {
         default: break;
-        case rook: should_check = get_rook_legal_moves(piece, board, should_simulate); break;
-        case knight: should_check = get_knight_legal_moves(piece, board, should_simulate); break;
-        case bishop: should_check = get_bishop_legal_moves(piece, board, should_simulate); break;
-        case queen: should_check = get_queen_legal_moves(piece, board, should_simulate); break;
-        case king: should_check = get_king_legal_moves(piece, board, should_simulate); break;
+        case rook:      should_check = get_rook_legal_moves(piece, board, should_simulate); break;
+        case knight:    should_check = get_knight_legal_moves(piece, board, should_simulate); break;
+        case bishop:    should_check = get_bishop_legal_moves(piece, board, should_simulate); break;
+        case queen:     should_check = get_queen_legal_moves(piece, board, should_simulate); break;
+        case king:      should_check = get_king_legal_moves(piece, board, should_simulate); break;
         case pawn:
         {
             const int possible_moves_count = 2;
 
-            int diagonal_left_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -1, -1) : get_cell_index_by_piece_position(piece, -1, +1);
-            int diagonal_right_idx = piece->is_white ? get_cell_index_by_piece_position(piece, +1, -1) : get_cell_index_by_piece_position(piece, +1, +1);
+            const int diagonal_left_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -1, -1) : get_cell_index_by_piece_position(piece, -1, +1);
+            const int diagonal_right_idx = piece->is_white ? get_cell_index_by_piece_position(piece, +1, -1) : get_cell_index_by_piece_position(piece, +1, +1);
             
-            int possible_moves[] = {
+            const int possible_moves[] = {
                 diagonal_left_idx,
                 diagonal_right_idx
             };
 
-            for (size_t i = 0; i < possible_moves_count; i++)
+            for (unsigned long moveIdx = 0ul; moveIdx != possible_moves_count; ++moveIdx)
             {
-                int index_to_look = possible_moves[i];
-                char skip_lateral_bounds = i == 0 ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
+                int index_to_look = possible_moves[moveIdx];
+                char skip_lateral_bounds = moveIdx == 0 ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
 
                 if (index_to_look < 0 || index_to_look > (BOARD_SZ - 1) || skip_lateral_bounds)
                     continue;
 
-                cell_t *cell_to_look = board->cells[index_to_look];
+                const cell_t *const cell_to_look = board->cells[index_to_look];
 
                 if (!memcmp(cell_to_look, destination, sizeof(cell_t)))
                 {
-                    fprintf(stdout, "Pawn could move here: %i\n", index_to_look);
+                    fprintf(stdout, "[[WARNING]]: [%s] could move at index: [%i]\n", chess_piece_to_string(piece), index_to_look);
                     return TRUE;
                 }
             }
@@ -840,12 +843,12 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
     {
         for (size_t i = 0; i < piece->moves_number; i++)
         {
-            int index_to_look = piece->possible_squares[i];
-            cell_t *cell_to_look = board->cells[index_to_look];
+            const int index_to_look = piece->possible_squares[i];
+            const cell_t *const cell_to_look = board->cells[index_to_look];
 
             if (!memcmp(cell_to_look, destination, sizeof(cell_t)) && !cell_to_look->is_occupied)
             {
-                fprintf(stdout, "[[Blocked]]: [%s] could move at index: [%i]\n", chess_piece_to_string(piece), index_to_look);
+                fprintf(stdout, "[[WARNING]]: [%s] could move at index: [%i]\n", chess_piece_to_string(piece), index_to_look);
                 return TRUE;
             }
         }
@@ -859,11 +862,7 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
 chess_piece_t *chess_piece_new(piece_type_t type, char is_white)
 {
     chess_piece_t *piece = (chess_piece_t *)calloc(1, sizeof(chess_piece_t));
-    if (!piece)
-    {
-        fprintf(stderr, "Couldn't allocate memory for chess_piece_t\n");
-        return NULL;
-    }
+    CHECK(piece, NULL, "Couldn't allocate memory for chess_piece_t");
 
     piece->piece_type = type;
     piece->draw = _draw_piece;
@@ -937,12 +936,12 @@ const char* chess_piece_to_string(chess_piece_t* piece)
 {
     switch (piece->piece_type)
     {
-    case rook: return "Rook";
-    case knight: return "Knight";
-    case bishop: return "Bishop";
-    case queen: return "Queen";
-    case king: return "King";
-    case pawn: return "Pawn";
-    default: return "**Invalid**";
+    case rook:      return "Rook";
+    case knight:    return "Knight";
+    case bishop:    return "Bishop";
+    case queen:     return "Queen";
+    case king:      return "King";
+    case pawn:      return "Pawn";
+    default:        return "**Invalid Pawn**";
     }
 }

@@ -32,4 +32,11 @@
 
 #define ever ;;
 
+#define strcat_macro(str1, str2) #str1 "" #str2
+
+#define CHECK(x, y, msg) if(!x){\
+    fprintf(stderr, strcat_macro(msg, "\n"));\
+    return y;\
+}\
+
 #endif
