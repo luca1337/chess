@@ -14,7 +14,7 @@ tex_list_item_t* tex_list_item_new(int* err)
 
 void tex_list_item_destroy(tex_list_item_t* item)
 {
-    // implement destroy
+    // todo implement destroy
     free(item->next);
     free(item->prev);
     free(item);

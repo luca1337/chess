@@ -1,6 +1,7 @@
 #include "game.h"
 #include "events.h"
 #include "scoreboard.h"
+#include "cell.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,7 +64,7 @@ static void handle_chess_piece_selection(game_t *game)
             cell_t *current_cell = game->board->cells[current_cell_index];
 
             // get chess piece from cell
-            chess_piece_t *current_chess_piece = (chess_piece_t *)current_cell->entity;
+            chess_piece_t *current_chess_piece = current_cell->entity;
 
             if (current_chess_piece)
             {

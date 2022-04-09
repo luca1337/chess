@@ -1,12 +1,12 @@
 #ifndef CESS_PIECE_H
 #define CESS_PIECE_H
 
-#include "entity.h"
 #include "utils.h"
-#include "texture.h"
-#include "board.h"
-#include "player.h"
 #include "queue.h"
+
+typedef struct board board_t;
+typedef struct cell cell_t;
+typedef struct texture texture_t;
 
 // which direction do we want to move on ?
 typedef enum move_direction{
@@ -33,7 +33,6 @@ void piece_move_destroy(piece_move_t* move);
 
 // base class that every piece will inherit from
 typedef struct chess_piece{
-    entity_t* entity; // do not use this!!
     piece_type_t piece_type;
     texture_t* chess_texture;
     piece_move_t** moves;

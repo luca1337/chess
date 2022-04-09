@@ -1,6 +1,9 @@
 #include "chess_piece.h"
 #include "events.h"
 #include "texture.h"
+#include "board.h"
+#include "player.h"
+#include "cell.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -884,7 +887,7 @@ void chess_piece_set_entity_cell(board_t *board, chess_piece_t *piece, int index
         return;
     }
 
-    board->cells[index]->entity = (entity_t *)piece;
+    board->cells[index]->entity = piece;
     board->cells[index]->is_occupied = TRUE;
 }
 
