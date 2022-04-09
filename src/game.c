@@ -265,6 +265,8 @@ void game_update(game_t *game)
             {
                 if (game->promotion_pieces[i])
                 {
+                    color_t color_mod = game->current_player->is_white ? GREEN : RED;
+                    SDL_SetTextureColorMod(game->promotion_pieces[i]->chess_texture->texture, color_mod.r, color_mod.g, color_mod.b);
                     game->promotion_pieces[i]->draw(game->promotion_pieces[i]);
 
                     // check if mouse is inside one of the available pieces
