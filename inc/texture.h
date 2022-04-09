@@ -18,7 +18,7 @@ typedef struct texture{
     void(*set_size)(struct texture* texture, float width, float height);
 }texture_t;
 
-texture_t* texture_load_from_file(const char* path);
+texture_t* texture_load_from_file(const char* path, const char use_blending);
 texture_t* texture_create_raw(uint32_t width, uint32_t height, color_t color);
 void texture_destroy(texture_t* texture);
 

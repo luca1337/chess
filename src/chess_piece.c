@@ -25,7 +25,7 @@ const char *assets[7] = {
     "../assets/textures/pawn",
 };
 
-static texture_t *get_chess_texture(piece_type_t type, char is_white)
+static texture_t *get_chess_texture(piece_type_t type, char is_white, const char use_blending)
 {
     texture_t *result = NULL;
 
@@ -41,7 +41,7 @@ static texture_t *get_chess_texture(piece_type_t type, char is_white)
     strcat_s(path, total_buf_len, is_white ? white_png_postfix : black_png_postfix);
     // path[total_buf_len] = '\0';
 
-    result = texture_load_from_file(path);
+    result = texture_load_from_file(path, use_blending);
 
     free(path);
 
@@ -862,7 +862,7 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
     return FALSE;
 }
 
-chess_piece_t *chess_piece_new(piece_type_t type, char is_white)
+chess_piece_t *chess_piece_new(piece_type_t type, char is_white, const char use_blending)
 {
     chess_piece_t *piece = (chess_piece_t *)calloc(1, sizeof(chess_piece_t));
     CHECK(piece, NULL, "Couldn't allocate memory for chess_piece_t");
@@ -874,7 +874,7 @@ chess_piece_t *chess_piece_new(piece_type_t type, char is_white)
     piece->check_checkmate = _check_checkmate;
     piece->is_white = is_white;
     piece->is_first_move = TRUE;
-    piece->chess_texture = get_chess_texture(type, is_white);
+    piece->chess_texture = get_chess_texture(type, is_white, use_blending);
 
     return piece;
 }

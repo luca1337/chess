@@ -57,7 +57,7 @@ char get_rook_legal_moves(chess_piece_t* piece, board_t* board, char simulate);
 char get_bishop_legal_moves(chess_piece_t* piece, board_t* board, char simulate);
 char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate);
 
-chess_piece_t* chess_piece_new(piece_type_t type, char is_white);
+chess_piece_t* chess_piece_new(piece_type_t type, char is_white, const char use_blending);
 void chess_piece_set_entity_cell(board_t* board, chess_piece_t* piece, int index);
 void chess_piece_set_entity_null(board_t* board, unsigned index);
 char chess_piece_is_near_upper_bound(chess_piece_t* piece);

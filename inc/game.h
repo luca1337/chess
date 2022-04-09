@@ -13,8 +13,11 @@ typedef struct game{
     queue_t* players_queue;
     player_t* current_player;
     chess_piece_t* current_piece;
+    chess_piece_t* promoted_piece;
     render_text_t* player_turn_text;
     scoreboard_t scoreboard;
+    chess_piece_t* promotion_pieces[PROMOTION_PIECES_COUNT];
+    char is_promoting_pawn;
 }game_t;
 
 game_t* game_new();

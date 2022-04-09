@@ -52,9 +52,9 @@ void _render(struct texture *texture, char use_alpha, uint8_t alpha, SDL_Rect *c
         return;
     }
 
-    SDL_SetRenderDrawBlendMode(native_renderer, SDL_BLENDMODE_BLEND);
     if (use_alpha)
         SDL_SetTextureAlphaMod(texture->texture, alpha);
+
     SDL_RenderCopy(native_renderer, texture->texture, NULL, &texture->quad);
 }
 
@@ -115,7 +115,7 @@ texture_t *texture_create_raw(uint32_t width, uint32_t height, color_t color)
     return texture;
 }
 
-texture_t *texture_load_from_file(const char *path)
+texture_t *texture_load_from_file(const char *path, const char use_blending)
 {
     texture_t *texture = (texture_t*)calloc(1, sizeof(texture_t));
     texture->render = _render;
@@ -138,7 +138,7 @@ texture_t *texture_load_from_file(const char *path)
 
     memset(pixel, 0, width * height * color_channel);
     memcpy(pixel, data, width * height * color_channel);
-    SDL_SetTextureBlendMode(texture->texture, SDL_BLENDMODE_BLEND);
+   if (use_blending) SDL_SetTextureBlendMode(texture->texture, SDL_BLENDMODE_BLEND);
     SDL_UnlockTexture(texture->texture);
 
     texture->width = width;

@@ -4,6 +4,7 @@
 #include "private.h"
 
 typedef struct cell cell_t;
+typedef struct chess_piece chess_piece_t;
 
 static const int board_matrix[BOARD_SZ] =
 {

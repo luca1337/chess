@@ -18,7 +18,7 @@ texture_mgr_t* texture_mrg_new()
 
 texture_t* add_texture(texture_mgr_t* t_mgr, const char* name, const char* file_name, uint32_t format, int access, int channels)
 {
-    texture_t* texture = texture_load_from_file(file_name);
+    texture_t* texture = texture_load_from_file(file_name, 1);
 
     int len = strlen(name);
     char* buf = malloc(len + 1);
