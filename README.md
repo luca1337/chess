@@ -11,6 +11,6 @@ This is the Chess game, written in C using SDL for fun as a university project. 
 ----------------------------------------------------------------------------
 
 <p float="left">
-  <img src="https://user-images.githubusercontent.com/7602472/162612643-bac28397-7bf5-43d5-a133-b2621cefb27e.png" width=30% height=30%>
-  <img src="https://user-images.githubusercontent.com/7602472/162612643-bac28397-7bf5-43d5-a133-b2621cefb27e.png" width=30% height=30%>
+  <img src="https://user-images.githubusercontent.com/7602472/162612643-bac28397-7bf5-43d5-a133-b2621cefb27e.png" width=40% height=40%>
+  <img src="https://user-images.githubusercontent.com/7602472/162612643-bac28397-7bf5-43d5-a133-b2621cefb27e.png" width=40% height=40%>
 </p>
