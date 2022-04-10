@@ -10,4 +10,4 @@ This is the Chess game, written in C using SDL for fun as a university project. 
 
 ----------------------------------------------------------------------------
 
-![Senza titolo]<img src="https://user-images.githubusercontent.com/7602472/162612643-bac28397-7bf5-43d5-a133-b2621cefb27e.png width="400" height="464">
+<img src="https://user-images.githubusercontent.com/7602472/162612643-bac28397-7bf5-43d5-a133-b2621cefb27e.png" width=50% height=50%>
