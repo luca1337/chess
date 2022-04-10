@@ -19,7 +19,7 @@ int old_piece_cell_index    = 0;
 
 static void recycle_textures(chess_piece_t *piece)
 {
-    for (size_t i = 0; i < piece->moves_number; i++)
+    for (unsigned long i = 0ul; i < piece->moves_number; ++i)
     {
         if (!piece->moves || !piece->moves[i])
             continue;
@@ -117,6 +117,12 @@ static void handle_chess_piece_selection(game_t *game)
 
             if (found_cell)
             {
+                if (found_cell->is_occupied)
+                {
+                    game->current_player->score += found_cell->entity->score_value;
+                    scoreboard_update(&game->scoreboard, game->current_player);
+                }
+
                 // set the position to the new found cell
                 game->current_piece->set_position(game->current_piece, found_cell->pos_x, found_cell->pos_y);
 

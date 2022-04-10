@@ -876,6 +876,16 @@ chess_piece_t *chess_piece_new(piece_type_t type, char is_white, const char use_
     piece->is_first_move = TRUE;
     piece->chess_texture = get_chess_texture(type, is_white, use_blending);
 
+    switch (type)
+    {
+    case rook: piece->score_value = 5; break;
+    case knight: case bishop: piece->score_value = 3; break;
+    case queen: piece->score_value = 9; break;
+    case king: piece->score_value = UINT_MAX; break;
+    case pawn: piece->score_value = 1; break;
+    default: break;
+    }
+
     return piece;
 }
 

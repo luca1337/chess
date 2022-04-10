@@ -43,6 +43,7 @@ typedef struct chess_piece{
     char is_killed;
     char is_first_move;
     int pos_x, pos_y;
+    int score_value;
     void(*draw)(struct chess_piece* piece);
     void(*set_position)(struct chess_piece* piece, int x, int y);
     char(*generate_legal_moves)(struct chess_piece* piece, board_t* board);
