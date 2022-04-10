@@ -264,9 +264,6 @@ void game_update(game_t *game)
             int mouse_x, mouse_y;
             SDL_GetMouseState(&mouse_x, &mouse_y);
 
-            if (mouse_y >= SCREEN_H)
-                return;
-
             for (unsigned long i = 0ul; i < PROMOTION_PIECES_COUNT; i++)
             {
                 if (game->promotion_pieces[i])
