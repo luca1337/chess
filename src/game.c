@@ -89,12 +89,9 @@ static void handle_chess_piece_selection(game_t *game)
 
             if (current_chess_piece)
             {
-                // se è presente controllo il colore del giocatore che sia lo stesso
-                // delle pedine che sto selezionando per evitare di poter prendere
-                // scacchi che non appartengono al giocatore corrente
+                // just ensure that the current player is the same as the one trying to pick the chess piece
                 if (game->current_player->is_white == current_chess_piece->is_white)
                 {
-                    // arrivati quà siamo sicuri che la pedina sia presente all'interno
                     game->current_piece = current_chess_piece;
                     old_piece_cell_index = current_cell_index;
                     old_pos_x = game->current_piece->pos_x;
@@ -234,8 +231,11 @@ void game_update(game_t *game)
 
         // --- DRAW OBJECTS ---
 
-        if (!game->is_promoting_pawn) 
+        // if player is promoting a pawn we block any other interaction
+        if (!game->is_promoting_pawn)
+        {
             handle_chess_piece_selection(game);
+        }
 
         // draw board and pieces
         game->board->draw(game->board);
@@ -275,17 +275,16 @@ void game_update(game_t *game)
                     SDL_SetTextureColorMod(game->promotion_pieces[i]->chess_texture->texture, color_mod.r, color_mod.g, color_mod.b);
                     game->promotion_pieces[i]->draw(game->promotion_pieces[i]);
 
-                    // check if mouse is inside one of the available pieces
+                    // check if mouse is inside one of the available pieces to choose
                     if ((mouse_x > game->promotion_pieces[i]->pos_x && (mouse_x < game->promotion_pieces[i]->pos_x + CELL_SZ)) 
                         && (mouse_y > game->promotion_pieces[i]->pos_y && mouse_y < (game->promotion_pieces[i]->pos_y + CELL_SZ)))
                     {
-                        // printf("selecting: [%s]\n", chess_piece_to_string(game->promotion_pieces[i]));
-
                         if (is_mouse_button_down(events))
                         {
                             // promote pawn
                             game->promoted_piece = chess_piece_new(game->promotion_pieces[i]->piece_type, game->promotion_pieces[i]->is_white, TRUE);
                             game->is_promoting_pawn = FALSE;
+                            memset(game->promotion_pieces, 0, sizeof(chess_piece_t) * PROMOTION_PIECES_COUNT);
                             break;
                         }
                     }

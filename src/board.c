@@ -58,13 +58,13 @@ board_t *board_new()
 
     color_t cell_color = color_create(0.0f, 0.0f, 0.0f, 1.0f);
 
-    // piazziamo le celle della scacchiera
-    for (size_t columnIndex = 0; columnIndex != CELLS_PER_ROW; ++columnIndex)
+    // place down board cells
+    for (unsigned long columnIndex = 0ul; columnIndex != CELLS_PER_ROW; ++columnIndex)
     {
         char is_odd = (columnIndex % 2);
         char is_black = is_odd;
 
-        for (size_t rowIndex = 0; rowIndex != CELLS_PER_ROW; ++rowIndex)
+        for (unsigned long rowIndex = 0ul; rowIndex != CELLS_PER_ROW; ++rowIndex)
         {
             // transform b-dim array to mono dimensional
             int cell_index = (columnIndex * CELLS_PER_ROW) + rowIndex;
@@ -79,9 +79,7 @@ board_t *board_new()
             cell_color = is_black ? BLACK : WHITE;
             is_black = !is_black;
 
-            // Dopo che abbiamo calcolato correttamente l'indice in cui la cella deve essere posizionata per formare
-            // la scacchiera, e dopo aver calcolato anche il colore in base all'indice pari o dispari, creiamo le celle
-            // passandogli posizione, grandezza e colore
+            // after we calculated color of the cell and position, let's create it
             board->cells[cell_index] = cell_new(position, cell_size, cell_color);
             board->cells[cell_index]->pos_x = pos_x;
             board->cells[cell_index]->pos_y = pos_y;
@@ -90,7 +88,7 @@ board_t *board_new()
             piece_type_t type       = (piece_type_t)board_matrix_value;
             char is_upper_board     = cell_index <= NUM_OF_CHESS_PIECES;
 
-            // place down chess pieces:
+            // here i place down chess pieces for each know type
             switch (board_matrix_value)
             {
             default:                                                                              break;
@@ -109,7 +107,7 @@ board_t *board_new()
 
 void board_destroy(board_t* board)
 {
-    for (size_t i = 0; i < BOARD_SZ; i++)
+    for (unsigned long i = 0; i != BOARD_SZ; ++i)
     {
         cell_destroy(board->cells[i]);
     }
