@@ -55,4 +55,5 @@ void* queue_peek(queue_t* queue)
 
 void queue_destroy(queue_t* queue)
 {
+    // todo: must implement a generic destroy
 }

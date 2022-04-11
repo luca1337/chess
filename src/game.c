@@ -7,10 +7,10 @@
 #include <string.h>
 
 // GLOBALS
-window_t *window            = NULL;
-renderer_t *renderer        = NULL;
-events_t *events            = NULL;
-queue_t *texture_queue      = NULL;
+window_t *window                = NULL;
+renderer_t *renderer            = NULL;
+events_t *events                = NULL;
+queue_t *texture_queue          = NULL;
 
 int old_pos_x               = 0;
 int old_pos_y               = 0;
@@ -135,7 +135,27 @@ static void handle_chess_piece_selection(game_t *game)
                 chess_piece_set_entity_null(game->board, old_piece_cell_index);
                 chess_piece_set_entity_cell(game->board, game->current_piece, current_cell_index);
 
+                game->current_piece->is_enpassant = game->current_piece->piece_type == pawn 
+                                                    && game->current_piece->is_first_move 
+                                                    && abs(old_pos_y - (int)game->current_piece->pos_y) > CELL_SZ;
+
+#pragma region ENPASSANT
+                if (game->current_piece->piece_type == pawn)
+                {
+                    int index = game->current_piece->is_white ? current_cell_index + CELLS_PER_ROW : current_cell_index - CELLS_PER_ROW;
+                    chess_piece_t* enpassant_piece = game->board->cells[index]->entity;
+
+                    if (enpassant_piece && enpassant_piece->is_enpassant)
+                    {
+                        chess_piece_set_entity_null(game->board, index);
+
+                        // update scoreboard
+                        game->current_player->score += enpassant_piece->score_value;
+                        scoreboard_update(&game->scoreboard, game->current_player);
+                    }
+                }
                 game->current_piece->is_first_move = FALSE;
+#pragma endregion
 
                 if (!game->is_promoting_pawn)
                 {

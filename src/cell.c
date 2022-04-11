@@ -11,6 +11,8 @@ cell_t* previous_cell = NULL;
 
 static void _draw_cell(cell_t *cell)
 {
+    SDL_assert_always(cell);
+
     cell->cell_texture->render(cell->cell_texture, 0, NULL);
 }
 
@@ -29,10 +31,7 @@ cell_t *cell_new(vec2_t pos, vec2_t sz, color_t draw_color)
 
 void cell_highlight(cell_t* cell, float x, float y, color_t color)
 {
-    if (!cell)
-    {
-        return;
-    }
+    SDL_assert_always(cell);
 
     if ((x > cell->pos_x && x < (cell->pos_x + CELL_SZ)) && (y > cell->pos_y && (y < cell->pos_y + CELL_SZ)) && !previous_cell)
     {

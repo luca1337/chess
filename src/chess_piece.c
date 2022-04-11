@@ -131,6 +131,7 @@ char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     // matrice in indici verticali
     const int vertical_moves_count = is_first_move ? 2 : 1;
     const int diagonal_moves_count = 2;
+    const int enpassant_moves_count = 2;
 
     // se è la prima volta che muovo la pedina, posso suggerire due caselle in verticale ( solo x muovermi e non x mangiare )
     // invece le caselle in diagonale possono sempre essere suggerite in quanto servono solo per mangiare e non per spostarsi liberamente
@@ -144,7 +145,13 @@ char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     const int diagonal_left_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -1, -1) : get_cell_index_by_piece_position(piece, -1, +1);
     const int diagonal_right_idx = piece->is_white ? get_cell_index_by_piece_position(piece, +1, -1) : get_cell_index_by_piece_position(piece, +1, +1);
 
+    // e.p indexes
+    const int enpassant_left_idx = get_cell_index_by_piece_position(piece, -1, -0);
+    const int enpassant_right_idx = get_cell_index_by_piece_position(piece, +1, +0);
+
     const int possible_squares[] = {
+        enpassant_left_idx,
+        enpassant_right_idx,
         diagonal_left_idx,
         diagonal_right_idx,
         first_vert_idx,
@@ -152,39 +159,59 @@ char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     };
 
     // verticale e diagonale
-    for (size_t squareIdx = 0; squareIdx != (diagonal_moves_count + vertical_moves_count); squareIdx++)
+    for (unsigned long squareIdx = 0ul; squareIdx != (enpassant_moves_count + diagonal_moves_count + vertical_moves_count); ++squareIdx)
     {
-        const int matrix_index = possible_squares[squareIdx];
+        int matrix_index = possible_squares[squareIdx];
 
         if (matrix_index < 0 || matrix_index > (BOARD_SZ - 1))
             continue;
 
         cell_t *current_cell = board->cells[matrix_index];
 
-        if (squareIdx < diagonal_moves_count)
+        if (squareIdx < (enpassant_moves_count + diagonal_moves_count))
         {
-            const char skip_lateral_bounds = squareIdx == 0 ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
+            const char skip_lateral_bounds = (!(squareIdx % 2)) ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
 
             // controllo se la pedina è ai bordi della matrice per evitare l'overflow
-            if (skip_lateral_bounds || !current_cell)
+            if (skip_lateral_bounds || !current_cell){
                 continue;
+            }
 
-            // arrivati qui siamo sicuri che la cella digonale NON sia nulla
-            const chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
+            // Handle enpassant
+            if (squareIdx < enpassant_moves_count)
+            {
+                // arrivati qui siamo sicuri che la cella digonale NON sia nulla
+                const chess_piece_t *current_cell_piece = current_cell->entity;
 
-            // se la cella diagonale ha una pedina ed è del nostro stesso team o non esiste una pedina, non possiamo muoverci
-            if ((current_cell_piece && (current_cell_piece->is_white == is_white)) || !current_cell_piece)
-                continue;
+                if (current_cell_piece && (current_cell_piece->is_enpassant && current_cell_piece->is_white != is_white))
+                {
+                    matrix_index = is_white ? matrix_index - CELLS_PER_ROW : matrix_index + CELLS_PER_ROW;
+
+                    queue_enqueue(piece->index_queue, matrix_index);
+                    piece->moves_number++;
+                    continue;
+                }
+                else{
+                    continue;
+                }
+            }
+            else // Handle diagonal movements
+            {
+                const chess_piece_t *current_cell_piece = current_cell->entity;
+
+                // we cannot move
+                if ((current_cell_piece && (current_cell_piece->is_white == is_white)) || !current_cell_piece)
+                    continue;
+            }
         }
         else
         {
-            // se la prima cella è invalicabile o nulla rompo il ciclo
-            if (current_cell->is_occupied)
+            if (current_cell->is_occupied){
                 break;
+            }
         }
 
         queue_enqueue(piece->index_queue, matrix_index);
-
         piece->moves_number++;
     }
 
@@ -268,7 +295,7 @@ char get_knight_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                     break;
 
             cell_t *current_cell = board->cells[possible_square];
-            chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
+            chess_piece_t *current_cell_piece = current_cell->entity;
 
             if (!current_cell->is_occupied || (current_cell->is_occupied && ((current_cell_piece->is_white != piece->is_white))))
             {
@@ -732,7 +759,7 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             // check checkmate: to implement a check checkmate algorithm, we need to check for each piece present on the board
             // if it can occupy one of the hypotetical available cells for the king
 
-            const chess_piece_t *const current_cell_piece = (chess_piece_t *)current_cell->entity;
+            const chess_piece_t *const current_cell_piece = current_cell->entity;
 
             if (!current_cell->is_occupied || (current_cell->is_occupied && ((current_cell_piece->is_white != piece->is_white))))
             {
@@ -743,7 +770,7 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                     // we must iterate over all the enemies' pawns and check whether they could reach this cell
                     for (unsigned long cellIdx = 0ul; cellIdx != BOARD_SZ; ++cellIdx)
                     {
-                        chess_piece_t *enemy_pc = (chess_piece_t *)board->cells[cellIdx]->entity;
+                        chess_piece_t *enemy_pc = board->cells[cellIdx]->entity;
 
                         if (!enemy_pc)
                             continue;

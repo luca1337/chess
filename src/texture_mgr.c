@@ -16,13 +16,13 @@ texture_mgr_t* texture_mrg_new()
     return texture_mgr;
 }
 
-texture_t* add_texture(texture_mgr_t* t_mgr, const char* name, const char* file_name, uint32_t format, int access, int channels)
+texture_t* add_texture(texture_mgr_t* t_mgr, const char* key, const char* path)
 {
-    texture_t* texture = texture_load_from_file(file_name, 1);
+    texture_t* texture = texture_load_from_file(path, 1);
 
-    int len = strlen(name);
+    int len = strlen(key);
     char* buf = malloc(len + 1);
-    strcpy_s(buf, len + 1, name);
+    strcpy_s(buf, len + 1, key);
 
     texture->name = buf;
 
