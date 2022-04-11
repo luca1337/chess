@@ -8,20 +8,6 @@ typedef struct board board_t;
 typedef struct cell cell_t;
 typedef struct texture texture_t;
 
-// which direction do we want to move on ?
-typedef enum move_direction{
-    east,
-    north_east,
-    north,
-    north_west,
-    west,
-    south_west,
-    south,
-    south_east,
-    // ---
-    MAX_DIR
-}move_direction_t;
-
 // pawn moves
 typedef struct piece_move{
     cell_t* possible_cells;
@@ -31,7 +17,6 @@ typedef struct piece_move{
 piece_move_t* piece_move_new();
 void piece_move_destroy(piece_move_t* move);
 
-// base class that every piece will inherit from
 typedef struct chess_piece{
     piece_type_t piece_type;
     texture_t* chess_texture;

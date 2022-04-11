@@ -4,7 +4,6 @@
 #include "chess_piece.h"
 
 typedef struct player{
-    char* name;
     char is_white;
     int score;
 }player_t;

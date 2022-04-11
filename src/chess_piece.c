@@ -82,7 +82,7 @@ static int get_cell_index_by_piece_position(chess_piece_t* piece, int x_offset, 
 
 static char allocate_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 {
-    // if no moves are available simply go out and this pawn cannot move.
+    // if no moves are available just go out and this pawn cannot move.
     if (piece->moves_number == 0)
         return FALSE;
 
@@ -93,7 +93,7 @@ static char allocate_legal_moves(chess_piece_t* piece, board_t* board, char simu
         piece->possible_squares = (int*)calloc(piece->moves_number, sizeof(int) * piece->moves_number);
         CHECK(piece->possible_squares, NULL, "Couldn't allocate memory for piece->possible_squares");
 
-        for (size_t i = 0; i < piece->moves_number; i++)
+        for (unsigned long i = 0ul; i < piece->moves_number; ++i)
         {
             const int index = queue_peek(piece->index_queue);
             piece->possible_squares[i] = index;
@@ -105,7 +105,7 @@ static char allocate_legal_moves(chess_piece_t* piece, board_t* board, char simu
         piece->moves = (piece_move_t **)calloc(piece->moves_number, sizeof(piece_move_t *));
         CHECK(piece->moves, NULL, "Couldn't allocate memory for piece->moves ");
 
-        for (size_t i = 0; i < piece->moves_number; i++)
+        for (unsigned long i = 0ul; i < piece->moves_number; ++i)
         {
             int index = queue_peek(piece->index_queue);
 
