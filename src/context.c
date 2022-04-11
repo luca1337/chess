@@ -1,5 +1,6 @@
 #include "context.h"
 #include "events.h"
+#include "private.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -17,29 +18,25 @@ extern events_t *events;
 window_t *window_new(unsigned int width, unsigned int height, const char *title)
 {
     window_t *win = (window_t *)calloc(1, sizeof(window_t));
-    if (!win)
-    {
-        fprintf(stderr, "Could not create window\n");
-        return NULL;
-    }
+    CHECK(win, NULL, "Couldn't allocate memory for window struct");
 
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0)
     {
-        printf("Couldn't initialize SDL: %s\n", SDL_GetError());
+        SDL_Log("Couldn't initialize SDL: [%s]", SDL_GetError());
         return NULL;
     }
 
     win->sdl_window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, 0x0);
     if (!win->sdl_window)
     {
-        printf("Couldn't initialize SDL window: [%s]\n", SDL_GetError());
+        SDL_Log("Couldn't initialize SDL window: [%s]", SDL_GetError());
         return NULL;
     }
 
     SDL_Surface *window_icon = IMG_Load("../assets/textures/chess.png");
     if (!window_icon)
     {
-        printf("Couldn't load window icon: [%s]\n", SDL_GetError());
+        SDL_Log("Couldn't load window icon: [%s]", SDL_GetError());
     }
     SDL_SetWindowIcon((SDL_Window *)win->sdl_window, window_icon);
 
@@ -48,7 +45,7 @@ window_t *window_new(unsigned int width, unsigned int height, const char *title)
 
     if (TTF_Init() != 0)
     {
-        printf("Couldn't initialize TTF Engine: %s\n", SDL_GetError());
+        SDL_Log("Couldn't initialize TTF Engine: [%s]", SDL_GetError());
         return NULL;
     }
 
@@ -58,16 +55,12 @@ window_t *window_new(unsigned int width, unsigned int height, const char *title)
 renderer_t *renderer_new(window_t *window)
 {
     renderer_t *rend = (renderer_t *)calloc(1, sizeof(renderer_t));
-    if (!rend)
-    {
-        fprintf(stderr, "Could not create renderer\n");
-        return NULL;
-    }
+    CHECK(rend, NULL, "Couldn't allocate memory for renderer struct");
 
     rend->sdl_renderer = SDL_CreateRenderer((SDL_Window *)window->sdl_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!rend->sdl_renderer)
     {
-        printf("Couldn't initialize SDL renderer: [%s]\n", SDL_GetError());
+        SDL_Log("Couldn't initialize SDL renderer: [%s]", SDL_GetError());
         return NULL;
     }
 
@@ -101,7 +94,7 @@ void renderer_update_events_and_delta_time(window_t *window, renderer_t *rendere
     // update delta timing
     start = end;
     end = SDL_GetPerformanceCounter();
-    window->delta_time = (float)(((end - start) * 100) / (float)SDL_GetPerformanceFrequency());
+    window->delta_time = (float)(((end - start) * 1000) / (float)SDL_GetPerformanceFrequency());
 }
 
 void renderer_present(renderer_t *renderer)

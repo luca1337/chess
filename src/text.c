@@ -1,4 +1,5 @@
 #include "text.h"
+#include "private.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,13 +9,8 @@ extern renderer_t *renderer;
 
 render_text_t *text_new(const char *font, uint16_t font_size, const char *text, color_t color)
 {
-    render_text_t *render_text = (render_text_t *)malloc(sizeof(render_text_t));
-    if (!render_text)
-    {
-        printf("Could not allocate enough bytes for struct text!\n");
-        return NULL;
-    }
-    memset(render_text, 0, sizeof(render_text_t));
+    render_text_t *render_text = (render_text_t *)calloc(1, sizeof(render_text_t));
+    CHECK(render_text, NULL, "Could not allocate enough bytes for struct text");
 
     render_text->font = TTF_OpenFont(font, font_size);
 
@@ -29,7 +25,7 @@ render_text_t *text_new(const char *font, uint16_t font_size, const char *text, 
     return render_text;
 }
 
-void text_draw(render_text_t *render_text, int size_x, int size_y, int screen_x, int screen_y)
+void text_draw(render_text_t *render_text, int screen_x, int screen_y)
 {
     if (!render_text)
     {
@@ -49,7 +45,7 @@ void text_update(render_text_t *render_text, char *new_text)
     render_text->text_surface = TTF_RenderText_Blended(render_text->font, new_text, render_text->color);
     render_text->copy_texture = SDL_CreateTextureFromSurface((SDL_Renderer *)renderer->sdl_renderer, render_text->text_surface);
 
-    // also update width and height that might be changed if the new text is wider
+    // also update width and height that might be changed if the new text is wider or smaller
     SDL_QueryTexture(render_text->copy_texture, NULL, NULL, &render_text->width, &render_text->height);
 }
 

@@ -17,7 +17,7 @@ typedef struct render_text{
 }render_text_t;
 
 render_text_t* text_new(const char* font, uint16_t font_size, const char* text, color_t color);
-void text_draw(render_text_t* render_text, int size_x, int size_y, int screen_x, int screen_y);
+void text_draw(render_text_t* render_text, int screen_x, int screen_y);
 void text_update(render_text_t* render_text, char* new_text);
 void text_destroy(render_text_t* render_text);
 

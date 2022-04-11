@@ -13,7 +13,7 @@ typedef struct texture{
     SDL_Rect quad;
     SDL_Rect* clip;
     char* name;
-    void(*render)(struct texture* texture, char use_alpha, uint8_t alpha, SDL_Rect* clip);
+    void(*render)(struct texture* texture, uint8_t alpha, SDL_Rect* clip);
     void(*set_position)(struct texture* texture, int x, int y);
     void(*set_size)(struct texture* texture, float width, float height);
 }texture_t;

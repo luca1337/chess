@@ -43,7 +43,7 @@ extern renderer_t *renderer;
     out_texture->quad.h = tex_height;
 }*/
 
-void _render(struct texture *texture, char use_alpha, uint8_t alpha, SDL_Rect *clip)
+void _render(struct texture *texture, uint8_t alpha, SDL_Rect *clip)
 {
     SDL_Renderer *native_renderer = (SDL_Renderer *)renderer->sdl_renderer;
 
@@ -52,7 +52,7 @@ void _render(struct texture *texture, char use_alpha, uint8_t alpha, SDL_Rect *c
         return;
     }
 
-    if (use_alpha)
+    if (alpha > 0)
         SDL_SetTextureAlphaMod(texture->texture, alpha);
 
     SDL_RenderCopy(native_renderer, texture->texture, NULL, &texture->quad);

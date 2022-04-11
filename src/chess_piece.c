@@ -50,7 +50,7 @@ static texture_t *get_chess_texture(piece_type_t type, char is_white, const char
 
 static void _draw_piece(struct chess_piece *piece)
 {
-    piece->chess_texture->render(piece->chess_texture, 0, 0, NULL);
+    piece->chess_texture->render(piece->chess_texture, 0, NULL);
 }
 
 static void _set_position(struct chess_piece *piece, int x, int y)
