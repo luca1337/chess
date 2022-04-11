@@ -3,7 +3,6 @@
 #include "scoreboard.h"
 #include "cell.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -77,6 +76,13 @@ static void handle_chess_piece_selection(game_t *game)
 
     int current_cell_index = ((mouse_y / BOARD_SZ) * CELLS_PER_ROW) + mouse_x / BOARD_SZ;
 
+    if (!game->is_promoting_pawn)
+    {
+        // give a feedback to player of the current hovered cell
+        color_t hightlight_color = game->current_player->is_white ? GREEN : RED;
+        cell_highlight(game->board->cells[current_cell_index], mouse_x, mouse_y, hightlight_color);
+    }
+
     if (is_mouse_button_down(events))
     {
         if (!game->current_piece)
@@ -89,7 +95,7 @@ static void handle_chess_piece_selection(game_t *game)
 
             if (current_chess_piece)
             {
-                // just ensure that the current player is the same as the one trying to pick the chess piece
+                // just ensure that the current player color is the same as the piece
                 if (game->current_player->is_white == current_chess_piece->is_white)
                 {
                     game->current_piece = current_chess_piece;
@@ -244,7 +250,7 @@ void game_update(game_t *game)
         scoreboard_render(&game->scoreboard);
 
         // draw turn's text 
-        text_draw(game->player_turn_text, 0, 0, (SCREEN_W / 2) - game->player_turn_text->width / 2, SCREEN_H + 14);
+        text_draw(game->player_turn_text, (SCREEN_W / 2) - game->player_turn_text->width / 2, SCREEN_H + 14);
 
         // draw possible moves around cells
         if (is_mouse_button_down(events))
@@ -253,12 +259,12 @@ void game_update(game_t *game)
             {
                 for (unsigned long i = 0ul; i < game->current_piece->moves_number; ++i)
                 {
-                    game->current_piece->moves[i]->markers->render(game->current_piece->moves[i]->markers, TRUE, SDL_ALPHA_OPAQUE / 2, NULL);
+                    game->current_piece->moves[i]->markers->render(game->current_piece->moves[i]->markers, SDL_ALPHA_OPAQUE / 2, NULL);
                 }
             }
         }
 
-        // draw pawn promotion pieces
+        // draw pawn promotion textures
         if (game->is_promoting_pawn)
         {
             int mouse_x, mouse_y;

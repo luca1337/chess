@@ -16,6 +16,7 @@ typedef struct cell{
 }cell_t;
 
 cell_t* cell_new(vec2_t pos, vec2_t sz, color_t);
+void cell_highlight(cell_t* cell, float x, float y, color_t);
 char is_cell_busy(cell_t* cell);
 char is_cell_upper_bound(cell_t* cell);
 char is_cell_lower_bound(cell_t* cell);
