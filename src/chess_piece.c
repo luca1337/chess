@@ -704,35 +704,34 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     // the king can move to adjacent cells in all directions, by one square.
     piece->moves_number = 0;
 
+    const int max_castling_steps = 2;
     const int max_moves = 8;
 
     piece->index_queue = queue_new(max_moves, sizeof(int) * max_moves);
 
     // precalculate possible squares
-    const int lefx_idx        = get_cell_index_by_piece_position(piece, -1, -0);
     const int up_left_idx     = get_cell_index_by_piece_position(piece, -1, -1);
     const int up_idx          = get_cell_index_by_piece_position(piece, -0, -1);
     const int up_right_idx    = get_cell_index_by_piece_position(piece, +1, -1);
-    const int right_idx       = get_cell_index_by_piece_position(piece, +1, +0);
     const int down_right_idx  = get_cell_index_by_piece_position(piece, +1, +1);
     const int down_idx        = get_cell_index_by_piece_position(piece, +0, +1);
     const int down_left_idx   = get_cell_index_by_piece_position(piece, -1, +1);
-
+    
+    int step = 1;
     move_direction_t move_direction = east;
     while (move_direction != MAX_DIR)
     {
+            int possible_square = 0;
         for(ever)
         {
-            int possible_square = 0;
-
             switch (move_direction)
             {
             default:                                                    break;
-            case east:          possible_square     = lefx_idx;         break;
+            case east:          possible_square     = get_cell_index_by_piece_position(piece, -step, -0); break; // castling on east (long castling)
             case north_east:    possible_square     = up_left_idx;      break;
             case north:         possible_square     = up_idx;           break;
             case north_west:    possible_square     = up_right_idx;     break;
-            case west:          possible_square     = right_idx;        break;
+            case west:          possible_square     = get_cell_index_by_piece_position(piece, +step, +0); break;
             case south_west:    possible_square     = down_right_idx;   break;
             case south:         possible_square     = down_idx;         break;
             case south_east:    possible_square     = down_left_idx;    break;
@@ -751,8 +750,12 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             if ((is_north_west || is_west || is_south_west) && chess_piece_is_near_right_bound(piece))
                     break;
 
+
             if (possible_square < 0 || possible_square > (BOARD_SZ - 1))
                 break;
+
+            if (is_east && piece->is_white)
+                printf("idx: %i\n", possible_square);
 
             cell_t *const current_cell = board->cells[possible_square];
 
@@ -763,7 +766,7 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
             if (!current_cell->is_occupied || (current_cell->is_occupied && ((current_cell_piece->is_white != piece->is_white))))
             {
-                // this statement because when the piece currently checked it's a king then this function will be called recursively
+                // when the piece currently checked it's a king then this function will be called recursively and we shall avoid that
                 if (!simulate)
                 {
                     // only here the king could move but we must check if that cell will turn him into checkmate
@@ -780,7 +783,7 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
                         // we stop everytime a enemy piece can move in the same cell that the king could move to
                         if (enemy_pc->check_checkmate(board, enemy_pc, current_cell))
-                            goto exit_loop; // jmp
+                            goto exit; // jmp
                     }
                 }
                 
@@ -792,8 +795,23 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             if (current_cell->is_occupied && (current_cell_piece->is_white == piece->is_white))
                 break;
         }
-        exit_loop:
+        exit:
 
+#pragma region CASTLING
+        int left_rook_idx = piece->is_white ? 56 : 0;
+        int right_rook_idx = piece->is_white ? 63 : 7;
+
+        char check_long_castling = (move_direction == east && (board->cells[left_rook_idx]->entity && board->cells[left_rook_idx]->entity->piece_type == rook && board->cells[left_rook_idx]->entity->is_first_move));
+        char check_short_castling = (move_direction == west && (board->cells[right_rook_idx]->entity && board->cells[right_rook_idx]->entity->piece_type == rook && board->cells[right_rook_idx]->entity->is_first_move));
+
+        if ((check_long_castling || check_short_castling)&& piece->is_first_move && step < max_castling_steps)
+        {
+            step++;
+            continue;
+        }
+#pragma endregion
+
+        step = 1;
         move_direction++;
     }
 
@@ -861,7 +879,7 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
 
                 if (!memcmp(cell_to_look, destination, sizeof(cell_t)))
                 {
-                    fprintf(stdout, "[[WARNING]]: [%s] could move at index: [%i]\n", chess_piece_to_string(piece), index_to_look);
+                    fprintf(stdout, "[[CHECKMATE]]: [%s] could move at index: [%i]\n", chess_piece_to_string(piece), index_to_look);
                     return TRUE;
                 }
             }
@@ -878,7 +896,7 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
 
             if (!memcmp(cell_to_look, destination, sizeof(cell_t)) && !cell_to_look->is_occupied)
             {
-                fprintf(stdout, "[[WARNING]]: [%s] could move at index: [%i]\n", chess_piece_to_string(piece), index_to_look);
+                fprintf(stdout, "[[CHECKMATE]]: [%s] could move at index: [%i]\n", chess_piece_to_string(piece), index_to_look);
                 return TRUE;
             }
         }

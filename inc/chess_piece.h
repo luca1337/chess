@@ -27,6 +27,7 @@ typedef struct chess_piece{
     char is_white;
     char is_first_move;
     char is_enpassant;
+    char is_castling;
     float pos_x;
     float pos_y;
     int score_value;

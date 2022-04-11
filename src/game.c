@@ -135,9 +135,46 @@ static void handle_chess_piece_selection(game_t *game)
                 chess_piece_set_entity_null(game->board, old_piece_cell_index);
                 chess_piece_set_entity_cell(game->board, game->current_piece, current_cell_index);
 
+                // Set current pawn to enpassant
                 game->current_piece->is_enpassant = game->current_piece->piece_type == pawn 
                                                     && game->current_piece->is_first_move 
                                                     && abs(old_pos_y - (int)game->current_piece->pos_y) > CELL_SZ;
+
+                // Set current king on castling
+                game->current_piece->is_castling = game->current_piece->piece_type == king 
+                                                    && game->current_piece->is_first_move 
+                                                    && abs(old_pos_x - (int)game->current_piece->pos_x) > CELL_SZ;
+
+#pragma region CASTLING
+                if (game->current_piece->piece_type == king)
+                {
+                    if (game->current_piece->is_castling)
+                    {
+                        // now swap rook place to protect against king's unwanted moves
+                        if (current_cell_index < old_piece_cell_index)
+                        {
+                            printf("long castling\n");
+
+                            int left_rook_idx = game->current_player->is_white ? 56 : 0;
+
+                            game->board->cells[left_rook_idx]->entity->set_position(game->board->cells[left_rook_idx]->entity, game->board->cells[current_cell_index + 1]->pos_x, game->board->cells[current_cell_index + 1]->pos_y);
+                            chess_piece_set_entity_cell(game->board, game->board->cells[left_rook_idx]->entity, current_cell_index + 1);
+                            chess_piece_set_entity_null(game->board, left_rook_idx);
+                        }
+                        else
+                        {
+                            printf("short castling\n");
+                            
+                            int right_rook_idx = game->current_player->is_white ? 63 : 7;
+
+                            game->board->cells[right_rook_idx]->entity->set_position(game->board->cells[right_rook_idx]->entity, game->board->cells[current_cell_index - 1]->pos_x, game->board->cells[current_cell_index - 1]->pos_y);
+                            chess_piece_set_entity_cell(game->board, game->board->cells[right_rook_idx]->entity, current_cell_index - 1);
+                            chess_piece_set_entity_null(game->board, right_rook_idx);
+
+                        }
+                    }
+                }
+#pragma endregion
 
 #pragma region ENPASSANT
                 if (game->current_piece->piece_type == pawn)
@@ -154,8 +191,9 @@ static void handle_chess_piece_selection(game_t *game)
                         scoreboard_update(&game->scoreboard, game->current_player);
                     }
                 }
-                game->current_piece->is_first_move = FALSE;
 #pragma endregion
+
+                game->current_piece->is_first_move = FALSE;
 
                 if (!game->is_promoting_pawn)
                 {
@@ -171,6 +209,7 @@ static void handle_chess_piece_selection(game_t *game)
                 }
                 else
                 {
+                    game->current_piece->is_first_move = TRUE;
                     old_piece_cell_index = current_cell_index;
                 }
             }
@@ -240,7 +279,7 @@ void game_init(game_t *game)
     player_t *white_player = player_new(TRUE);
     player_t *black_player = player_new(FALSE);
 
-    // enqueue the two players starts white obviously
+    // enqueue the two players ans white starts
     game->players_queue = queue_new(MAX_PLAYERS, sizeof(player_t) * MAX_PLAYERS);
     queue_enqueue(game->players_queue, white_player);
     queue_enqueue(game->players_queue, black_player);

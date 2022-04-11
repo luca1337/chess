@@ -3,7 +3,6 @@
 #include "texture.h"
 #include "chess_piece.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -29,11 +28,11 @@ cell_t *cell_new(vec2_t pos, vec2_t sz, color_t draw_color)
     return cell;
 }
 
-void cell_highlight(cell_t* cell, float x, float y, color_t color)
+void cell_highlight(cell_t* cell, float mouse_x, float mouse_y, color_t color)
 {
     SDL_assert_always(cell);
 
-    if ((x > cell->pos_x && x < (cell->pos_x + CELL_SZ)) && (y > cell->pos_y && (y < cell->pos_y + CELL_SZ)) && !previous_cell)
+    if ((mouse_x > cell->pos_x && mouse_x < (cell->pos_x + CELL_SZ)) && (mouse_y > cell->pos_y && (mouse_y < cell->pos_y + CELL_SZ)) && !previous_cell)
     {
         SDL_SetTextureColorMod(cell->cell_texture->texture, color.r, color.g, color.b);
         previous_cell = cell;
