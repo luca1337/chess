@@ -196,7 +196,7 @@ static void handle_chess_piece_selection(game_t *game)
                     int index = game->current_piece->is_white ? current_cell_index + CELLS_PER_ROW : current_cell_index - CELLS_PER_ROW;
                     chess_piece_t *enpassant_piece = game->board->cells[index]->entity;
 
-                    if (enpassant_piece && enpassant_piece->is_enpassant)
+                    if (enpassant_piece && enpassant_piece->is_enpassant && enpassant_piece->is_white != game->current_piece->is_white)
                     {
                         chess_piece_set_entity_null(game->board, index);
 
