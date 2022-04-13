@@ -1,6 +1,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+typedef struct board board_t;
+
 typedef enum piece_type{
     none = 0,
     rook,
@@ -24,5 +26,7 @@ typedef enum move_direction{
     // ---
     MAX_DIR
 }move_direction_t;
+
+int get_index_by_mouse_coords();
 
 #endif
