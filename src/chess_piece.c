@@ -87,9 +87,12 @@ static char allocate_legal_moves(chess_piece_t* piece, board_t* board, char simu
         return FALSE;
 
     // We distinguish the simulation because, in this case, we only care abouts "indexes" of the board
-    // that the pawn could go if moved.
+    // that the pawn could go if moved. This piece of code is called only when the king is selected and
+    // in this way we can start "simulating" all the possible moves that all the enemy pieces could do
+    // in the next turn, to se whether the king will be in checkmate.
     if (simulate)
     {
+        // TODO: implement memory pool also here. Again, allocating each time this piece of memory is not correct at all. 
         piece->possible_squares = (int*)calloc(piece->moves_number, sizeof(int) * piece->moves_number);
         CHECK(piece->possible_squares, NULL, "Couldn't allocate memory for piece->possible_squares");
 
@@ -102,12 +105,13 @@ static char allocate_legal_moves(chess_piece_t* piece, board_t* board, char simu
     }
     else
     {
+        // TODO: implement memory pool also here. Again, allocating each time this piece of memory is not correct at all. 
         piece->moves = (piece_move_t **)calloc(piece->moves_number, sizeof(piece_move_t *));
         CHECK(piece->moves, NULL, "Couldn't allocate memory for piece->moves ");
 
         for (unsigned long i = 0ul; i < piece->moves_number; ++i)
         {
-            int index = queue_peek(piece->index_queue);
+            const int index = queue_peek(piece->index_queue);
 
             piece->moves[i] = piece_move_new();
             piece->moves[i]->possible_cells = board->cells[index];
@@ -138,12 +142,12 @@ char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     piece->index_queue = queue_new(diagonal_moves_count + vertical_moves_count, sizeof(int) * (diagonal_moves_count + vertical_moves_count));
 
     // vertical squares
-    const int first_vert_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -0, -1) : get_cell_index_by_piece_position(piece, +0, +1);
-    const int second_vert_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -0, -2) : get_cell_index_by_piece_position(piece, +0, +2);
+    const int first_vert_idx = is_white ? get_cell_index_by_piece_position(piece, -0, -1) : get_cell_index_by_piece_position(piece, +0, +1);
+    const int second_vert_idx = is_white ? get_cell_index_by_piece_position(piece, -0, -2) : get_cell_index_by_piece_position(piece, +0, +2);
 
     // diagonal squares
-    const int diagonal_left_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -1, -1) : get_cell_index_by_piece_position(piece, -1, +1);
-    const int diagonal_right_idx = piece->is_white ? get_cell_index_by_piece_position(piece, +1, -1) : get_cell_index_by_piece_position(piece, +1, +1);
+    const int diagonal_left_idx = is_white ? get_cell_index_by_piece_position(piece, -1, -1) : get_cell_index_by_piece_position(piece, -1, +1);
+    const int diagonal_right_idx = is_white ? get_cell_index_by_piece_position(piece, +1, -1) : get_cell_index_by_piece_position(piece, +1, +1);
 
     // e.p indexes
     const int enpassant_left_idx = get_cell_index_by_piece_position(piece, -1, -0);
@@ -155,7 +159,7 @@ char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
         diagonal_left_idx,
         diagonal_right_idx,
         first_vert_idx,
-        second_vert_idx // questo viene controllato solo la prima volta.
+        second_vert_idx // this index it's basically checked only once (when the pawn is moved for the first time, since it can move by 2 squares)
     };
 
     // verticale e diagonale
@@ -170,9 +174,9 @@ char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
         if (squareIdx < (enpassant_moves_count + diagonal_moves_count))
         {
+            // Just check whether we should skip the check based on oddity/evenly
             const char skip_lateral_bounds = (!(squareIdx % 2)) ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
 
-            // controllo se la pedina è ai bordi della matrice per evitare l'overflow
             if (skip_lateral_bounds || !current_cell){
                 continue;
             }
@@ -220,9 +224,7 @@ char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
 char get_knight_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 {
-    // the knight can move in a "L" shape in all directions ->
-    // controllo direttamente la casella all'indice calcolato per la matrice
-    // se è fuori bounds rompo il ciclo
+    // the knight can move in a "L" shape in all directions
 
     // reset variables
     piece->moves_number = 0;
@@ -230,6 +232,10 @@ char get_knight_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     const int max_moves = 10;
 
     piece->index_queue = queue_new(max_moves, sizeof(int) * max_moves);
+
+    // we precalculate all the possible indexes that the piece could move on
+    // and since the knight can jump over the piece, we don't actually care to
+    // check the neighbors' cell in that direction.
 
     // up left, left up
     const int left_up_idx = get_cell_index_by_piece_position(piece, -2, -1);
@@ -247,15 +253,19 @@ char get_knight_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     const int down_left_idx = get_cell_index_by_piece_position(piece, -1, +2);
     const int left_down_idx = get_cell_index_by_piece_position(piece, -2, +1);
 
-    const char is_knight_within_lateral_bound_left = piece->pos_x >= 128;
-    const char is_knight_within_lateral_bound_right = piece->pos_x <= 320;
+    // Knight boundaries
+    const char is_knight_within_left_bound = piece->pos_x >= 128;
+    const char is_knight_within_right_bound = piece->pos_x <= 320;
 
+    // Start checking all the 8 directions!
     move_direction_t move_direction = east;
     while (move_direction != MAX_DIR)
     {
         for(ever)
         {
             int possible_square = 0;
+
+            // Check direction by direction in a clock-wise order.
 
             switch (move_direction)
             {
@@ -282,16 +292,19 @@ char get_knight_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             const char is_west            = move_direction == west;
             const char is_south_west      = move_direction == south_west;
 
+            // Here we check the boundaries making sure that the knight it's always
+            // inside the 8x8 matrix while checking it's possible moves
+
             if (is_south && !(piece->pos_x >= 64))
                 break;
             
             if (is_north && !(piece->pos_x <= 384))
                 break;
 
-            if ((is_east || is_north_east || is_south_east) && !is_knight_within_lateral_bound_left)
+            if ((is_east || is_north_east || is_south_east) && !is_knight_within_left_bound)
                     break;
 
-            if ((is_north_west || is_west || is_south_west) && !is_knight_within_lateral_bound_right)
+            if ((is_north_west || is_west || is_south_west) && !is_knight_within_right_bound)
                     break;
 
             cell_t *current_cell = board->cells[possible_square];
@@ -299,6 +312,7 @@ char get_knight_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
             if (!current_cell->is_occupied || (current_cell->is_occupied && ((current_cell_piece->is_white != piece->is_white))))
             {
+                // Eneueue the cell index only if this condition is satisfied, that means, this index will be part of legal moves
                 queue_enqueue(piece->index_queue, possible_square);
                 piece->moves_number++;
                 break;
@@ -328,6 +342,8 @@ char get_queen_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
     // the queen can move along all the six direction as far as possible until she encounter her ally or an enemy
     // we must check every possible direction starting from the nearest one
+
+    // This algorithm can be simplified a lot, but for now let's leave it like it is.
 
     // turning from east to sout-east all aorund in a clock-wise order
     move_direction_t move_direction = east;
@@ -504,14 +520,21 @@ char get_rook_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     // indice corrente della pedina nella matrice 8x8
     int piece_index = ((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ);
 
-    // the queen can move along all the six direction as far as possible until she encounter her ally or an enemy
-    // we must check every possible direction starting from the nearest one
+    // ROOK can vertically and horizontally on the board, so here we only check those directions
+    // East && West are pretty the same, just the index will be swapped as well as North && South
+    // Basically we take the selected chess piece as reference and increment/decrement it's current index on the board
+    // based on the direction we want to look for.
 
+    // all the possible directions for the rook, so we will look for each direction, until it will find an obstacle
     move_direction_t move_directions[4] = { east, north, west, south };
 
+    // start step from 1 so that we can already look in the adjacent cell in the first iteration and also we don't multiply by 0
     int step = 1;
     for (unsigned long dirIdx = 0ul; dirIdx != _countof(move_directions); ++dirIdx)
     {
+        cell_t *current_cell = NULL;
+        chess_piece_t *current_cell_piece = NULL;
+
         move_direction_t current_dir = move_directions[dirIdx];
         int cell_index = 0;
         for(ever)
@@ -526,8 +549,8 @@ char get_rook_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
                 cell_index = is_east ? (piece_index - step) : (piece_index + step);
 
-                cell_t *current_cell = board->cells[cell_index];
-                chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
+                current_cell = board->cells[cell_index];
+                current_cell_piece = current_cell->entity;
 
                 char is_current_cell_near_bounds = is_east ? is_cell_left_bound(current_cell) : is_cell_right_bound(current_cell);
 
@@ -537,21 +560,6 @@ char get_rook_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                     piece->moves_number++;
                     break;
                 }
-
-                if (current_cell->is_occupied && current_cell_piece->is_white != piece->is_white)
-                {
-                    queue_enqueue(piece->index_queue, cell_index);
-                    piece->moves_number++;
-                    break;
-                }
-
-                if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white))
-                    break;
-
-                queue_enqueue(piece->index_queue, cell_index);
-
-                step++;
-                piece->moves_number++;
             }
             else
             {
@@ -562,26 +570,28 @@ char get_rook_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                 if (cell_index < 0 || cell_index > (BOARD_SZ - 1))
                     break;
 
-                cell_t *current_cell = board->cells[cell_index];
-                chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
-
-                if ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white))
-                {
-                    piece->moves_number++;
-                    queue_enqueue(piece->index_queue, cell_index);
-                    break;
-                }
-
-                if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white))
-                    break;
-
-                queue_enqueue(piece->index_queue, cell_index);
-
-                step++;
-                piece->moves_number++;
+                current_cell = board->cells[cell_index];
+                current_cell_piece = current_cell->entity;
             }
+
+            if (current_cell->is_occupied && current_cell_piece->is_white != piece->is_white)
+            {
+                queue_enqueue(piece->index_queue, cell_index);
+                piece->moves_number++;
+                break;
+            }
+
+            if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white))
+                break;
+
+            queue_enqueue(piece->index_queue, cell_index);
+
+            step++;
+            piece->moves_number++;
         }
 
+        // reset back the piece index because while checking directions, we increment the index to look
+        // and in the end we bring it back (where the chess piece is located)
         piece_index = ((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ);
         step = 1;
     }
@@ -600,7 +610,6 @@ char get_bishop_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
     piece->index_queue = queue_new(max_bishop_moves, sizeof(int) * max_bishop_moves);
 
-    // indice corrente della pedina nella matrice 8x8
     int piece_index = ((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ);
 
     const move_direction_t move_directions[4] = { north_east, north_west, south_east, south_west };
@@ -821,7 +830,7 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
 char _generate_legal_moves(struct chess_piece *piece, board_t *board)
 {
-    // algoritmi di ricerca celle disponibili
+    // Here we just generate legal moves for each known type we picked up with mouse
 
     const char should_simulate = FALSE;
     switch (piece->piece_type)
@@ -889,7 +898,7 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
         } 
         break;
     }
-        
+    
     if (should_check)
     {
         for (size_t i = 0; i < piece->moves_number; i++)
