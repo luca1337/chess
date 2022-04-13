@@ -710,8 +710,10 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     piece->index_queue = queue_new(max_moves, sizeof(int) * max_moves);
 
     // precalculate possible squares
+    const int lefx_idx        = get_cell_index_by_piece_position(piece, -1, -0);
     const int up_left_idx     = get_cell_index_by_piece_position(piece, -1, -1);
     const int up_idx          = get_cell_index_by_piece_position(piece, -0, -1);
+    const int right_idx       = get_cell_index_by_piece_position(piece, +1, +0);
     const int up_right_idx    = get_cell_index_by_piece_position(piece, +1, -1);
     const int down_right_idx  = get_cell_index_by_piece_position(piece, +1, +1);
     const int down_idx        = get_cell_index_by_piece_position(piece, +0, +1);
@@ -721,17 +723,17 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     move_direction_t move_direction = east;
     while (move_direction != MAX_DIR)
     {
-            int possible_square = 0;
+        int possible_square = 0;
         for(ever)
         {
             switch (move_direction)
             {
             default:                                                    break;
-            case east:          possible_square     = get_cell_index_by_piece_position(piece, -step, -0); break; // castling on east (long castling)
+            case east:          possible_square     = simulate ? lefx_idx : get_cell_index_by_piece_position(piece, -step, -0); break; // castling on east (long castling)
             case north_east:    possible_square     = up_left_idx;      break;
             case north:         possible_square     = up_idx;           break;
             case north_west:    possible_square     = up_right_idx;     break;
-            case west:          possible_square     = get_cell_index_by_piece_position(piece, +step, +0); break;
+            case west:          possible_square     = simulate ? right_idx : get_cell_index_by_piece_position(piece, +step, +0); break;
             case south_west:    possible_square     = down_right_idx;   break;
             case south:         possible_square     = down_idx;         break;
             case south_east:    possible_square     = down_left_idx;    break;
@@ -750,12 +752,8 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             if ((is_north_west || is_west || is_south_west) && chess_piece_is_near_right_bound(piece))
                     break;
 
-
             if (possible_square < 0 || possible_square > (BOARD_SZ - 1))
                 break;
-
-            if (is_east && piece->is_white)
-                printf("idx: %i\n", possible_square);
 
             cell_t *const current_cell = board->cells[possible_square];
 
@@ -798,16 +796,19 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
         exit:
 
 #pragma region CASTLING
-        int left_rook_idx = piece->is_white ? 56 : 0;
-        int right_rook_idx = piece->is_white ? 63 : 7;
-
-        char check_long_castling = (move_direction == east && (board->cells[left_rook_idx]->entity && board->cells[left_rook_idx]->entity->piece_type == rook && board->cells[left_rook_idx]->entity->is_first_move));
-        char check_short_castling = (move_direction == west && (board->cells[right_rook_idx]->entity && board->cells[right_rook_idx]->entity->piece_type == rook && board->cells[right_rook_idx]->entity->is_first_move));
-
-        if ((check_long_castling || check_short_castling)&& piece->is_first_move && step < max_castling_steps)
+        if (!simulate)
         {
-            step++;
-            continue;
+            int left_rook_idx = piece->is_white ? 56 : 0;
+            int right_rook_idx = piece->is_white ? 63 : 7;
+
+            char check_long_castling = (move_direction == east && (board->cells[left_rook_idx]->entity && board->cells[left_rook_idx]->entity->piece_type == rook && board->cells[left_rook_idx]->entity->is_first_move));
+            char check_short_castling = (move_direction == west && (board->cells[right_rook_idx]->entity && board->cells[right_rook_idx]->entity->piece_type == rook && board->cells[right_rook_idx]->entity->is_first_move));
+
+            if ((check_long_castling || check_short_castling) && piece->is_first_move && step < max_castling_steps)
+            {
+                step++;
+                continue;
+            }
         }
 #pragma endregion
 
@@ -857,6 +858,8 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
         case king:      should_check = get_king_legal_moves(piece, board, should_simulate); break;
         case pawn:
         {
+            // probably this pawn check can also be done by extending the original get_pawn_moves to avoid code duplication but for now let's leave it like this.
+
             const int possible_moves_count = 2;
 
             const int diagonal_left_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -1, -1) : get_cell_index_by_piece_position(piece, -1, +1);
@@ -879,7 +882,7 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
 
                 if (!memcmp(cell_to_look, destination, sizeof(cell_t)))
                 {
-                    fprintf(stdout, "[[CHECKMATE]]: [%s] could move at index: [%i]\n", chess_piece_to_string(piece), index_to_look);
+                    SDL_Log("[[CHECKMATE]]: [%s] could move at index: [%i]", chess_piece_to_string(piece), index_to_look);
                     return TRUE;
                 }
             }
@@ -896,12 +899,10 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
 
             if (!memcmp(cell_to_look, destination, sizeof(cell_t)) && !cell_to_look->is_occupied)
             {
-                fprintf(stdout, "[[CHECKMATE]]: [%s] could move at index: [%i]\n", chess_piece_to_string(piece), index_to_look);
+                SDL_Log("[[CHECKMATE]]: [%s] could move at index: [%i]", chess_piece_to_string(piece), index_to_look);
                 return TRUE;
             }
         }
-
-        // free(piece->possible_squares);
     }
 
     return FALSE;
@@ -938,7 +939,7 @@ void chess_piece_set_entity_cell(board_t *board, chess_piece_t *piece, int index
 {
     if (CHECK_IDX_RANGE(index))
     {
-        printf("Index out of bounds: %i\n", index);
+        SDL_Log("Index out of bounds: %i", index);
         return;
     }
 
@@ -950,7 +951,7 @@ void chess_piece_set_entity_null(board_t *board, unsigned index)
 {
     if (CHECK_IDX_RANGE(index))
     {
-        printf("Index out of bounds: %i\n", index);
+        SDL_Log("Index out of bounds: %i", index);
         return;
     }
 

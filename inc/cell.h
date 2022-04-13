@@ -22,6 +22,7 @@ char is_cell_upper_bound(cell_t* cell);
 char is_cell_lower_bound(cell_t* cell);
 char is_cell_left_bound(cell_t* cell);
 char is_cell_right_bound(cell_t* cell);
+void cell_restore_state(cell_t* cell);
 void cell_destroy(cell_t* cell);
 
 #endif

@@ -24,7 +24,7 @@ typedef struct board{
 }board_t;
 
 board_t* board_new();
-// void board_swap_cells();
+void board_restore_state(board_t* board);
 void board_destroy(board_t* board);
 
 #endif

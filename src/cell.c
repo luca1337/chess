@@ -73,3 +73,8 @@ void cell_destroy(cell_t* cell)
 {
     texture_destroy(cell->cell_texture);
 }
+
+void cell_restore_state(cell_t* cell)
+{
+    cell->is_occupied = FALSE;
+}
