@@ -12,6 +12,7 @@ typedef struct window{
     char* title;
     float delta_time;
     void* sdl_window;
+    unsigned char* keys;
 }window_t;
 
 window_t* window_new(unsigned int width, unsigned int height, const char* title);

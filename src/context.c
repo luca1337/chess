@@ -95,6 +95,8 @@ void renderer_update_events_and_delta_time(window_t *window, renderer_t *rendere
     start = end;
     end = SDL_GetPerformanceCounter();
     window->delta_time = (float)(((end - start) * 1000) / (float)SDL_GetPerformanceFrequency());
+
+    window->keys = SDL_GetKeyboardState(NULL);
 }
 
 void renderer_present(renderer_t *renderer)

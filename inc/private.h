@@ -27,6 +27,7 @@
 #define FALSE 0
 
 #define TEXTURE_POOL_SIZE 32
+#define PIECE_POOL_SIZE 32
 
 #define CHECK_IDX_RANGE(x) (x < 0 || x >= BOARD_SZ)
 
@@ -35,6 +36,10 @@
 #define strcat_macro(str1, str2) #str1 "" #str2
 
 #define PROMOTION_PIECES_COUNT 4
+
+#define INVALID_INDEX -1
+
+#define MAX_GAME_STATES 4
 
 #define CHECK(f, ret, msg) if(!f){\
     fprintf(stderr, strcat_macro(msg, "\n"));\

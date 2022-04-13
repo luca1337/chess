@@ -31,6 +31,12 @@ void scoreboard_render(scoreboard_t* scoreboard)
     text_draw(scoreboard->black_player_score, SCREEN_W - scoreboard->black_player_score->width - 15, SCREEN_H + 32);
 }
 
+void scoreboard_reset_state(scoreboard_t* scoreboard)
+{
+    text_update(scoreboard->white_player_score, "White score: 0");
+    text_update(scoreboard->black_player_score, "Black score: 0");
+}
+
 void scoreboard_destroy(scoreboard_t* scoreboard)
 {
     text_destroy(scoreboard->white_player_score);

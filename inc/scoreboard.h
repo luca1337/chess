@@ -13,6 +13,7 @@ typedef struct scoreboard{
 void scoreboard_new(scoreboard_t* scoreboard);
 void scoreboard_update(scoreboard_t* scoreboard, player_t* player);
 void scoreboard_render(scoreboard_t* scoreboard);
+void scoreboard_reset_state(scoreboard_t* scoreboard);
 void scoreboard_destroy(scoreboard_t* scoreboard);
 
 #endif

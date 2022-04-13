@@ -28,8 +28,8 @@ typedef struct chess_piece{
     char is_first_move;
     char is_enpassant;
     char is_castling;
-    float pos_x;
-    float pos_y;
+    char is_active;
+    float pos_x, pos_y;
     int score_value;
     void(*draw)(struct chess_piece* piece);
     void(*set_position)(struct chess_piece* piece, int x, int y);

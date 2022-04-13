@@ -52,8 +52,3 @@ void* queue_peek(queue_t* queue)
 {
     return queue->data[queue->front];
 }
-
-void queue_destroy(queue_t* queue)
-{
-    // todo: must implement a generic destroy
-}
