@@ -111,11 +111,12 @@ static void handle_chess_piece_selection(game_t *game)
                     // check whether the king is in checkmate
                     if (game->current_piece->piece_type == king)
                     {
-                        if (game->current_piece->moves_number == 0)
+                        if (game->current_piece->moves_number == 0 && game->current_piece->is_blocked)
                         {
                             SDL_Log("King is in CHECKMATE, Game loss for: %s Team!", game->current_player->is_white ? "White" : "Black");
 
                             game->is_gameover = TRUE;
+                            game->current_piece->is_blocked = FALSE;
                         }
                     }
                 }
@@ -134,6 +135,8 @@ static void handle_chess_piece_selection(game_t *game)
 
             if (found_cell)
             {
+                system("cls");
+
                 // set the position to the new found cell
                 game->current_piece->set_position(game->current_piece, found_cell->pos_x, found_cell->pos_y);
 
@@ -158,7 +161,6 @@ static void handle_chess_piece_selection(game_t *game)
                 const char *player_color = game->current_player->is_white ? "White" : "Black";
 
 #pragma region CASTLING
-
                 enpassant_move_t ep_move;
                 memset(&ep_move, 0, sizeof(enpassant_move_t));
 
@@ -170,9 +172,12 @@ static void handle_chess_piece_selection(game_t *game)
                         const char is_long_castling = (current_cell_index < old_piece_cell_index);
                         SDL_Log(is_long_castling ? "[[LONG CASTLING]] of %s team" : "[[SHORT CASTLING]] of %s team", player_color);
 
-                        // calculate correct indexes
-                        const int left_rook_index = game->current_player->is_white ? 56 : 0; // indexes are hardcoded but we know by the board matrix that those are the same whenever the game start
-                        const int right_rook_index = game->current_player->is_white ? 63 : 7;
+                        // calculate correct indexes:
+                        // indexes are hardcoded but we know by the board matrix that those are the same whenever the game start
+                        // we also are sure that if we arrive here the left or right rooks are available for the castling because the
+                        // get_king_legal_moves already did this check.
+                        const int left_rook_index = game->current_player->is_white ? LOWER_LEFT_ROOK_INDEX : UPPER_LEFT_ROOK_INDEX; 
+                        const int right_rook_index = game->current_player->is_white ? LOWER_RIGHT_ROOK_INDEX : UPPER_RIGHT_ROOK_INDEX;
 
                         // swap rook and king
                         ep_move.swap_index = is_long_castling ? current_cell_index + 1 : current_cell_index - 1;
@@ -200,7 +205,7 @@ static void handle_chess_piece_selection(game_t *game)
                     {
                         chess_piece_set_entity_null(game->board, index);
 
-                        SDL_Log("[[Enpassant Move]] from %s team!", player_color);
+                        SDL_Log("[[ENPASSANT]] from %s team!", player_color);
 
                         // update scoreboard
                         game->current_player->score += enpassant_piece->score_value;
@@ -230,6 +235,7 @@ static void handle_chess_piece_selection(game_t *game)
             }
             else
             {
+                system("cls");
                 game->current_piece->set_position(game->current_piece, old_pos_x, old_pos_y);
             }
 
@@ -302,7 +308,6 @@ static void draw_promotion_pieces(game_t *game)
     {
         if (game->promotion_pieces[i])
         {
-            SDL_Log("Promoting pawn state");
             color_t color_mod = game->current_player->is_white ? GREEN : RED;
             SDL_SetTextureColorMod(game->promotion_pieces[i]->chess_texture->texture, color_mod.r, color_mod.g, color_mod.b);
             game->promotion_pieces[i]->draw(game->promotion_pieces[i]);
@@ -510,6 +515,7 @@ void game_update(game_t *game)
         draw_legal_moves(game);
 #pragma endregion
 
+        // Update current state 
         game->current_state = game->current_state->on_state_update(game->current_state, game);
 
         renderer_present(renderer);

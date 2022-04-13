@@ -31,6 +31,7 @@ typedef struct chess_piece{
     char is_active;
     float pos_x, pos_y;
     int score_value;
+    char is_blocked;
     void(*draw)(struct chess_piece* piece);
     void(*set_position)(struct chess_piece* piece, int x, int y);
     char(*generate_legal_moves)(struct chess_piece* piece, board_t* board);

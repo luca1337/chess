@@ -41,6 +41,11 @@
 
 #define MAX_GAME_STATES 4
 
+#define UPPER_LEFT_ROOK_INDEX 0
+#define UPPER_RIGHT_ROOK_INDEX 7
+#define LOWER_LEFT_ROOK_INDEX 56
+#define LOWER_RIGHT_ROOK_INDEX 63
+
 #define CHECK(f, ret, msg) if(!f){\
     fprintf(stderr, strcat_macro(msg, "\n"));\
     return ret;\

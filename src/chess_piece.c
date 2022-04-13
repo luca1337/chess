@@ -782,15 +782,41 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                     {
                         chess_piece_t *enemy_pc = board->cells[cellIdx]->entity;
 
-                        if (!enemy_pc)
+                        if (!enemy_pc || (enemy_pc && ((piece->is_white == enemy_pc->is_white) || (piece->is_white != enemy_pc->is_white && enemy_pc->piece_type == king))))
                             continue;
-
-                        if (piece->is_white == enemy_pc->is_white)
-                            continue;
-
+                            
                         // we stop everytime a enemy piece can move in the same cell that the king could move to
-                        if (enemy_pc->check_checkmate(board, enemy_pc, current_cell))
-                            goto exit; // jmp
+                        if (piece->check_checkmate(board, enemy_pc, current_cell))
+                        {
+                            // if we arrive here it doesn't necessarily means that the king is in checkmate
+                            // given that we have last some pawn we should check if some of them could kill the 
+                            // enemy pawn that is threatening the king. if noone can kill that enemy then, the king
+                            // totally in checkmate and the game is lost for that team.
+                            piece->is_blocked = TRUE;
+                            break;
+                        }
+                    }
+
+                    if (piece->is_blocked)
+                    {
+                        for (unsigned long cellIdx = 0ul; cellIdx != BOARD_SZ; ++cellIdx)
+                        {
+                            chess_piece_t *friedly_piece = board->cells[cellIdx]->entity;
+
+                            if (!friedly_piece || (friedly_piece && ((piece->is_white != friedly_piece->is_white) || (piece->is_white == friedly_piece->is_white && friedly_piece->piece_type == king))))
+                                continue;
+                                
+                            if (piece->check_checkmate(board, friedly_piece, current_cell))
+                            {
+                                piece->is_blocked = FALSE;
+                                goto exit;
+                            }
+                        }
+                    }
+
+                    if (piece->is_blocked)
+                    {
+                        goto exit;
                     }
                 }
                 
@@ -807,8 +833,8 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 #pragma region CASTLING
         if (!simulate)
         {
-            int left_rook_idx = piece->is_white ? 56 : 0;
-            int right_rook_idx = piece->is_white ? 63 : 7;
+            int left_rook_idx = piece->is_white ? LOWER_LEFT_ROOK_INDEX : UPPER_LEFT_ROOK_INDEX;
+            int right_rook_idx = piece->is_white ? LOWER_RIGHT_ROOK_INDEX : UPPER_RIGHT_ROOK_INDEX;
 
             char check_long_castling = (move_direction == east && (board->cells[left_rook_idx]->entity && board->cells[left_rook_idx]->entity->piece_type == rook && board->cells[left_rook_idx]->entity->is_first_move));
             char check_short_castling = (move_direction == west && (board->cells[right_rook_idx]->entity && board->cells[right_rook_idx]->entity->piece_type == rook && board->cells[right_rook_idx]->entity->is_first_move));
@@ -820,10 +846,12 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             }
         }
 #pragma endregion
-
+        
         step = 1;
         move_direction++;
+        piece->is_blocked = FALSE;
     }
+
 
     return allocate_legal_moves(piece, board, simulate);
 }
@@ -891,7 +919,7 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
 
                 if (!memcmp(cell_to_look, destination, sizeof(cell_t)))
                 {
-                    SDL_Log("[[CHECKMATE]]: [%s] could move at index: [%i]", chess_piece_to_string(piece), index_to_look);
+                    SDL_Log("[[CHECK CHECKMATE]]: [%s] [%s] could move on index: [%i]", piece->is_white ? "white" : "black", chess_piece_to_string(piece), index_to_look);
                     return TRUE;
                 }
             }
@@ -906,9 +934,9 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
             const int index_to_look = piece->possible_squares[i];
             const cell_t *const cell_to_look = board->cells[index_to_look];
 
-            if (!memcmp(cell_to_look, destination, sizeof(cell_t)) && !cell_to_look->is_occupied)
+            if (!memcmp(cell_to_look, destination, sizeof(cell_t)))
             {
-                SDL_Log("[[CHECKMATE]]: [%s] could move at index: [%i]", chess_piece_to_string(piece), index_to_look);
+                SDL_Log("[[CHECK CHECKMATE]]: [%s] [%s] could move on index: [%i]", piece->is_white ? "white" : "black", chess_piece_to_string(piece), index_to_look);
                 return TRUE;
             }
         }
@@ -931,6 +959,7 @@ chess_piece_t *chess_piece_new(piece_type_t type, char is_white, const char use_
     piece->is_first_move = TRUE;
     piece->chess_texture = get_chess_texture(type, is_white, use_blending);
 
+    // Setup score values for pieces
     switch (type)
     {
     case rook: piece->score_value = 5; break;
