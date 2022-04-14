@@ -708,6 +708,8 @@ char get_bishop_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     return allocate_legal_moves(piece, board, simulate);
 }
 
+unsigned depth = 0;
+
 char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 {
     // the king can move to adjacent cells in all directions, by one square.
@@ -774,7 +776,7 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             if (!current_cell->is_occupied || (current_cell->is_occupied && ((current_cell_piece->is_white != piece->is_white))))
             {
                 // when the piece currently checked it's a king then this function will be called recursively and we shall avoid that
-                if (!simulate)
+                if (!simulate && depth < 1)
                 {
                     // only here the king could move but we must check if that cell will turn him into checkmate
                     // we must iterate over all the enemies' pawns and check whether they could reach this cell
@@ -782,7 +784,12 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                     {
                         chess_piece_t *enemy_pc = board->cells[cellIdx]->entity;
 
-                        if (!enemy_pc || (enemy_pc && ((piece->is_white == enemy_pc->is_white) || (piece->is_white != enemy_pc->is_white && enemy_pc->piece_type == king))))
+                        if (enemy_pc && (piece->is_white != enemy_pc->is_white && enemy_pc->piece_type == king))
+                        {
+                            depth++;
+                        }
+
+                        if (!enemy_pc || (enemy_pc && ((piece->is_white == enemy_pc->is_white))))
                             continue;
                             
                         // we stop everytime a enemy piece can move in the same cell that the king could move to
@@ -792,6 +799,7 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                             // given that we have last some pawn we should check if some of them could kill the 
                             // enemy pawn that is threatening the king. if noone can kill that enemy then, the king
                             // totally in checkmate and the game is lost for that team.
+
                             piece->is_blocked = TRUE;
                             break;
                         }
@@ -799,11 +807,20 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
                     if (piece->is_blocked)
                     {
+                        // the king is blocked, try to rescue him by checking if any of friendly pawn can kill the blocking enemy.
+                        // if a pawn can rescue the king it means that he will not have any available move so he's blocked but the game is not ended yet
+
                         for (unsigned long cellIdx = 0ul; cellIdx != BOARD_SZ; ++cellIdx)
                         {
                             chess_piece_t *friedly_piece = board->cells[cellIdx]->entity;
 
-                            if (!friedly_piece || (friedly_piece && ((piece->is_white != friedly_piece->is_white) || (piece->is_white == friedly_piece->is_white && friedly_piece->piece_type == king))))
+                            // When the found piece it's a king (ourselves) ofc we must skip
+                            if (friedly_piece && (piece->is_white == friedly_piece->is_white && friedly_piece->piece_type == king))
+                            {
+                                continue;
+                            }
+
+                            if (!friedly_piece || (friedly_piece && ((piece->is_white != friedly_piece->is_white))))
                                 continue;
                                 
                             if (piece->check_checkmate(board, friedly_piece, current_cell))
@@ -812,11 +829,8 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                                 goto exit;
                             }
                         }
-                    }
 
-                    if (piece->is_blocked)
-                    {
-                        goto exit;
+                        break;
                     }
                 }
                 
@@ -852,6 +866,7 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
         piece->is_blocked = FALSE;
     }
 
+    depth = 0;
 
     return allocate_legal_moves(piece, board, simulate);
 }
@@ -885,6 +900,8 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
     const piece_type_t piece_type = piece->piece_type;
     char should_check = FALSE;
 
+    const char* player_color = piece->is_white ? "WHITE" : "BLACK";
+
     switch (piece_type)
     {
         default: break;
@@ -907,6 +924,7 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
                 diagonal_right_idx
             };
 
+
             for (unsigned long moveIdx = 0ul; moveIdx != possible_moves_count; ++moveIdx)
             {
                 int index_to_look = possible_moves[moveIdx];
@@ -919,7 +937,7 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
 
                 if (!memcmp(cell_to_look, destination, sizeof(cell_t)))
                 {
-                    SDL_Log("[[CHECK CHECKMATE]]: [%s] [%s] could move on index: [%i]", piece->is_white ? "white" : "black", chess_piece_to_string(piece), index_to_look);
+                    SDL_Log("[[CHECK CHECKMATE]]: [%s] [%s] can move on index: [%i]", player_color, chess_piece_to_string(piece), index_to_look);
                     return TRUE;
                 }
             }
@@ -929,14 +947,14 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
     
     if (should_check)
     {
-        for (size_t i = 0; i < piece->moves_number; i++)
+        for (unsigned long i = 0ul; i < piece->moves_number; ++i)
         {
             const int index_to_look = piece->possible_squares[i];
             const cell_t *const cell_to_look = board->cells[index_to_look];
 
             if (!memcmp(cell_to_look, destination, sizeof(cell_t)))
             {
-                SDL_Log("[[CHECK CHECKMATE]]: [%s] [%s] could move on index: [%i]", piece->is_white ? "white" : "black", chess_piece_to_string(piece), index_to_look);
+                SDL_Log("[[CHECK CHECKMATE]]: [%s] [%s] can move on index: [%i]", player_color, chess_piece_to_string(piece), index_to_look);
                 return TRUE;
             }
         }
