@@ -13,6 +13,7 @@ events_t *events = NULL;
 queue_t *texture_queue = NULL;
 
 render_text_t *gameover_text = NULL;
+render_text_t *restart_text = NULL;
 texture_t *gameover_background = NULL;
 
 int old_pos_x = 0;
@@ -113,7 +114,7 @@ static void handle_chess_piece_selection(game_t *game)
                     {
                         if (game->current_piece->moves_number == 0 && game->current_piece->is_blocked)
                         {
-                            SDL_Log("King is in CHECKMATE, Game loss for: %s Team!", game->current_player->is_white ? "White" : "Black");
+                            SDL_Log("King is in CHECKMATE, Game Lost for: %s Team!", game->current_player->is_white ? "White" : "Black");
 
                             game->is_gameover = TRUE;
                             game->current_piece->is_blocked = FALSE;
@@ -176,7 +177,7 @@ static void handle_chess_piece_selection(game_t *game)
                         // indexes are hardcoded but we know by the board matrix that those are the same whenever the game start
                         // we also are sure that if we arrive here the left or right rooks are available for the castling because the
                         // get_king_legal_moves already did this check.
-                        const int left_rook_index = game->current_player->is_white ? LOWER_LEFT_ROOK_INDEX : UPPER_LEFT_ROOK_INDEX; 
+                        const int left_rook_index = game->current_player->is_white ? LOWER_LEFT_ROOK_INDEX : UPPER_LEFT_ROOK_INDEX;
                         const int right_rook_index = game->current_player->is_white ? LOWER_RIGHT_ROOK_INDEX : UPPER_RIGHT_ROOK_INDEX;
 
                         // swap rook and king
@@ -365,11 +366,14 @@ void state_play_enter(game_t *game)
 
 game_state_t *state_play_update(game_state_t *gs, game_t *game)
 {
+    // go to gameover state
     if (game->is_gameover)
     {
+        gs->next[1]->on_state_enter(game);
         return gs->next[1];
     }
 
+    // go to promotion pawn state
     if (game->is_promoting_pawn)
     {
         return gs->next[0];
@@ -405,6 +409,10 @@ void state_promote_pawn_exit(game_t *game)
 
 void state_gameover_enter(game_t *game)
 {
+    char buffer[64];
+    memset(buffer, 0, sizeof(char) * 64);
+    sprintf_s(buffer, 64, "KING CHECKMATE! %s WINS!", game->current_player->is_white ? "BLACK" : "WHITE");
+    text_update(gameover_text, buffer);
 }
 
 game_state_t *state_gameover_update(game_state_t *gs, game_t *game)
@@ -422,6 +430,7 @@ game_state_t *state_gameover_update(game_state_t *gs, game_t *game)
 
     gameover_background->render(gameover_background, 0, NULL);
     text_draw(gameover_text, (SCREEN_W / 2) - gameover_text->text_surface->w / 2, (SCREEN_H / 2) - CELL_SZ);
+    text_draw(restart_text, (SCREEN_W / 2) - restart_text->text_surface->w / 2, (SCREEN_H / 2));
 
     return gs;
 }
@@ -490,10 +499,11 @@ void game_init(game_t *game)
     gameover_background = texture_create_raw(512, 512, gameover_background_color);
 
     color_t gameover_text_color = color_create(255, 255, 255, 0);
-    gameover_text = text_new("../assets/fonts/Lato-Black.ttf", 28, "GAME LOSS!", gameover_text_color);
+    gameover_text = text_new("../assets/fonts/Lato-Black.ttf", 28, "---", gameover_text_color);
+    restart_text = text_new("../assets/fonts/Lato-Black.ttf", 28, "PRESS SPACE TO RESTART", gameover_text_color);
 }
 
-void game_reset_state(game_t* game)
+void game_reset_state(game_t *game)
 {
     board_restore_state(game->board);
     scoreboard_reset_state(&game->scoreboard);
@@ -515,7 +525,7 @@ void game_update(game_t *game)
         draw_legal_moves(game);
 #pragma endregion
 
-        // Update current state 
+        // Update current state
         game->current_state = game->current_state->on_state_update(game->current_state, game);
 
         renderer_present(renderer);

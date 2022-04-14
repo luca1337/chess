@@ -15,6 +15,8 @@ extern queue_t *texture_queue;
 const char *white_png_postfix = "_w.png";
 const char *black_png_postfix = "_b.png";
 
+unsigned depth = 0;
+
 const char *assets[7] = {
     "",
     "../assets/textures/rook",
@@ -708,7 +710,31 @@ char get_bishop_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     return allocate_legal_moves(piece, board, simulate);
 }
 
-unsigned depth = 0;
+static char check_king_rescue(chess_piece_t* piece, board_t* board, cell_t* destination)
+{
+    for (unsigned long cellIdx = 0ul; cellIdx != BOARD_SZ; ++cellIdx)
+    {
+        chess_piece_t *friedly_piece = board->cells[cellIdx]->entity;
+
+        // When the found piece it's a king (ourselves) ofc we must skip
+        if (friedly_piece && (piece->is_white == friedly_piece->is_white && friedly_piece->piece_type == king))
+        {
+            continue;
+        }
+
+        if (!friedly_piece || (friedly_piece && ((piece->is_white != friedly_piece->is_white))))
+            continue;
+            
+        if (piece->check_checkmate(board, friedly_piece, destination))
+        {
+            piece->blocked_paths--;
+            piece->is_blocked = FALSE;
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
 
 char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 {
@@ -780,6 +806,7 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                 {
                     // only here the king could move but we must check if that cell will turn him into checkmate
                     // we must iterate over all the enemies' pawns and check whether they could reach this cell
+                    cell_t* blocking_cell = NULL;
                     for (unsigned long cellIdx = 0ul; cellIdx != BOARD_SZ; ++cellIdx)
                     {
                         chess_piece_t *enemy_pc = board->cells[cellIdx]->entity;
@@ -799,8 +826,9 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                             // given that we have last some pawn we should check if some of them could kill the 
                             // enemy pawn that is threatening the king. if noone can kill that enemy then, the king
                             // totally in checkmate and the game is lost for that team.
-
+                            piece->blocked_paths++;
                             piece->is_blocked = TRUE;
+                            blocking_cell = board->cells[cellIdx];
                             break;
                         }
                     }
@@ -810,22 +838,10 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                         // the king is blocked, try to rescue him by checking if any of friendly pawn can kill the blocking enemy.
                         // if a pawn can rescue the king it means that he will not have any available move so he's blocked but the game is not ended yet
 
-                        for (unsigned long cellIdx = 0ul; cellIdx != BOARD_SZ; ++cellIdx)
+                        if (!check_king_rescue(piece, board, current_cell))
                         {
-                            chess_piece_t *friedly_piece = board->cells[cellIdx]->entity;
-
-                            // When the found piece it's a king (ourselves) ofc we must skip
-                            if (friedly_piece && (piece->is_white == friedly_piece->is_white && friedly_piece->piece_type == king))
+                            if (check_king_rescue(piece, board, blocking_cell))
                             {
-                                continue;
-                            }
-
-                            if (!friedly_piece || (friedly_piece && ((piece->is_white != friedly_piece->is_white))))
-                                continue;
-                                
-                            if (piece->check_checkmate(board, friedly_piece, current_cell))
-                            {
-                                piece->is_blocked = FALSE;
                                 goto exit;
                             }
                         }
@@ -836,6 +852,7 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                 
                 queue_enqueue(piece->index_queue, possible_square);
                 piece->moves_number++;
+                piece->is_blocked = FALSE;
                 break;
             }
 
@@ -863,10 +880,16 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
         
         step = 1;
         move_direction++;
-        piece->is_blocked = FALSE;
+        // piece->is_blocked = FALSE;
     }
 
     depth = 0;
+
+    // In this case the king will  be totally blocked and the game is ended
+    if (piece->blocked_paths > 0 && piece->moves_number == 0)
+    {
+        piece->is_blocked = TRUE;
+    }
 
     return allocate_legal_moves(piece, board, simulate);
 }

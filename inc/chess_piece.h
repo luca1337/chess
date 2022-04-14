@@ -31,6 +31,7 @@ typedef struct chess_piece{
     char is_active;
     float pos_x, pos_y;
     int score_value;
+    int blocked_paths;
     char is_blocked;
     void(*draw)(struct chess_piece* piece);
     void(*set_position)(struct chess_piece* piece, int x, int y);
