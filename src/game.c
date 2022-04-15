@@ -575,4 +575,10 @@ void game_destroy(game_t *game)
     player_destroy(game->current_player);
     text_destroy(game->player_turn_text);
     scoreboard_destroy(&game->scoreboard);
+    Mix_FreeChunk(move_piece_fx);
+    Mix_FreeChunk(enpassant_fx);
+    Mix_FreeChunk(eat_fx);
+    Mix_FreeChunk(rankup_fx);
+    Mix_FreeChunk(gameover_fx);
+    Mix_FreeChunk(castling_fx);
 }
