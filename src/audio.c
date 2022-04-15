@@ -160,14 +160,13 @@ void initAudio(void)
 
     SDL_memset(&(gDevice->want), 0, sizeof(gDevice->want));
 
-    SDL_AudioSpec* sp = (SDL_AudioSpec*)SDL_malloc(sizeof(SDL_AudioSpec));
-    SDL_memset(sp, 0, sizeof(SDL_AudioSpec));
-    SDL_GetAudioDeviceSpec(SDL_GetNumAudioDevices(0) - 1, 0, sp);
+    SDL_AudioSpec sp;
+    SDL_GetAudioDeviceSpec(SDL_GetNumAudioDevices(0) - 1, 0, &sp);
 
-    (gDevice->want).freq = sp->freq;
-    (gDevice->want).format = sp->format;
-    (gDevice->want).channels = sp->channels;
-    (gDevice->want).samples = sp->samples;
+    (gDevice->want).freq = sp.freq;
+    (gDevice->want).format = sp.format;
+    (gDevice->want).channels = sp.channels;
+    (gDevice->want).samples = sp.samples;
     (gDevice->want).callback = audioCallback;
     (gDevice->want).userdata = calloc(1, sizeof(Audio));
 
