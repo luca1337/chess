@@ -3,10 +3,10 @@
 #include "scoreboard.h"
 #include "cell.h"
 
-#include "audio.h"
-
 #include <stdlib.h>
 #include <string.h>
+
+#include <SDL_mixer.h>
 
 // GLOBALS
 window_t *window = NULL;
@@ -22,12 +22,12 @@ int old_pos_x = 0;
 int old_pos_y = 0;
 int old_piece_cell_index = 0;
 
-Audio* move_piece_audio = NULL;
-Audio* castling_audio = NULL;
-Audio* enpassant_audio = NULL;
-Audio* eat_pawn_audio = NULL;
-Audio* gameover_audio = NULL;
-Audio* rankup_audio = NULL;
+static Mix_Chunk* move_piece_fx = NULL;
+static Mix_Chunk* enpassant_fx = NULL;
+static Mix_Chunk* castling_fx = NULL;
+static Mix_Chunk* eat_fx = NULL;
+static Mix_Chunk* rankup_fx = NULL;
+static Mix_Chunk* gameover_fx = NULL;
 
 static void recycle_textures(chess_piece_t *piece)
 {
@@ -127,7 +127,7 @@ static void handle_chess_piece_selection(game_t *game)
 
                             game->is_gameover = TRUE;
                             game->current_piece->is_blocked = FALSE;
-                            playSoundFromMemory(gameover_audio, SDL_MIX_MAXVOLUME);
+                            Mix_PlayChannel(-1, gameover_fx, FALSE);
                         }
                     }
                 }
@@ -153,14 +153,15 @@ static void handle_chess_piece_selection(game_t *game)
 
                 if (found_cell->is_occupied)
                 {
-                    playSoundFromMemory(eat_pawn_audio, SDL_MIX_MAXVOLUME);
+                    Mix_PlayChannel(-1, eat_fx, FALSE);
+
                     game->current_player->score += found_cell->entity->score_value;
                     scoreboard_update(&game->scoreboard, game->current_player);
                 }
                 else
                 {
                     // Play sound if cell is found but was not occupied
-                    playSoundFromMemory(move_piece_audio, SDL_MIX_MAXVOLUME);
+                    Mix_PlayChannel(-1, move_piece_fx, FALSE);
                 }
 
                 // always check if a pawn can be promoted
@@ -185,7 +186,7 @@ static void handle_chess_piece_selection(game_t *game)
                 {
                     if (game->current_piece->is_castling)
                     {
-                        playSoundFromMemory(castling_audio, SDL_MIX_MAXVOLUME);
+                        Mix_PlayChannel(-1, castling_fx, FALSE);
 
                         // now swap rook and king's
                         const char is_long_castling = (current_cell_index < old_piece_cell_index);
@@ -222,7 +223,7 @@ static void handle_chess_piece_selection(game_t *game)
 
                     if (enpassant_piece && enpassant_piece->is_enpassant && enpassant_piece->is_white != game->current_piece->is_white)
                     {
-                        playSoundFromMemory(enpassant_audio, SDL_MIX_MAXVOLUME);
+                        Mix_PlayChannel(-1, enpassant_fx, FALSE);
 
                         chess_piece_set_entity_null(game->board, index);
 
@@ -339,7 +340,7 @@ static void draw_promotion_pieces(game_t *game)
                 if (is_mouse_button_down(events))
                 {
                     // promote pawn
-                    playSoundFromMemory(rankup_audio, SDL_MIX_MAXVOLUME);
+                    Mix_PlayChannel(-1, rankup_fx, FALSE);
 
                     game->promoted_piece = chess_piece_new(game->promotion_pieces[i]->piece_type, game->promotion_pieces[i]->is_white, TRUE);
                     game->is_promoting_pawn = FALSE;
@@ -369,14 +370,6 @@ void state_setup_enter(game_t *game)
 
     game->current_player = queue_peek(game->players_queue);
     queue_dequeue(game->players_queue);
-
-    // Store audios in memory only once
-    move_piece_audio = createAudio("../assets/sounds/move_piece.wav", FALSE, SDL_MIX_MAXVOLUME);
-    castling_audio = createAudio("../assets/sounds/castling.wav", FALSE, SDL_MIX_MAXVOLUME);
-    enpassant_audio = createAudio("../assets/sounds/enpassant.wav", FALSE, SDL_MIX_MAXVOLUME);
-    eat_pawn_audio = createAudio("../assets/sounds/eat_pawn.wav", FALSE, SDL_MIX_MAXVOLUME);
-    gameover_audio = createAudio("../assets/sounds/gameover.wav", FALSE, SDL_MIX_MAXVOLUME);
-    rankup_audio = createAudio("../assets/sounds/rankup.wav", FALSE, SDL_MIX_MAXVOLUME);
 }
 
 static game_state_t *state_setup_update(game_state_t *gs, game_t *game)
@@ -531,6 +524,14 @@ void game_init(game_t *game)
     color_t gameover_text_color = color_create(255, 255, 255, 0);
     gameover_text = text_new("../assets/fonts/Lato-Black.ttf", 28, "---", gameover_text_color);
     restart_text = text_new("../assets/fonts/Lato-Black.ttf", 28, "PRESS SPACE TO RESTART", gameover_text_color);
+
+    // INIT AUDIO SOUNDS
+    move_piece_fx = Mix_LoadWAV("../assets/sounds/move_piece.wav");
+    enpassant_fx = Mix_LoadWAV("../assets/sounds/enpassant.wav");
+    castling_fx = Mix_LoadWAV("../assets/sounds/castling.wav");
+    eat_fx = Mix_LoadWAV("../assets/sounds/eat_pawn.wav");
+    rankup_fx = Mix_LoadWAV("../assets/sounds/rankup.wav");
+    gameover_fx = Mix_LoadWAV("../assets/sounds/gameover.wav");
 }
 
 void game_reset_state(game_t *game)
@@ -574,11 +575,4 @@ void game_destroy(game_t *game)
     player_destroy(game->current_player);
     text_destroy(game->player_turn_text);
     scoreboard_destroy(&game->scoreboard);
-    freeAudio(move_piece_audio);
-    freeAudio(castling_audio);
-    freeAudio(enpassant_audio);
-    freeAudio(eat_pawn_audio);
-    freeAudio(gameover_audio);
-    freeAudio(rankup_audio);
-    endAudio();
 }

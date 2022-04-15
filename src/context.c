@@ -1,7 +1,6 @@
 #include "context.h"
 #include "events.h"
 #include "private.h"
-#include "audio.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -10,6 +9,8 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
+
+#include <SDL_mixer.h>
 
 static uint64_t start = 0;
 static uint64_t end = 0;
@@ -26,8 +27,6 @@ window_t *window_new(unsigned int width, unsigned int height, const char *title)
         SDL_Log("Couldn't initialize SDL: [%s]", SDL_GetError());
         return NULL;
     }
-
-    initAudio();
 
     win->sdl_window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, 0x0);
     if (!win->sdl_window)
@@ -50,6 +49,11 @@ window_t *window_new(unsigned int width, unsigned int height, const char *title)
     {
         SDL_Log("Couldn't initialize TTF Engine: [%s]", SDL_GetError());
         return NULL;
+    }
+
+    if (Mix_OpenAudio(44000, AUDIO_S32LSB, 2, 4096) != 0)
+    {
+        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't init SDL_Mixer: %s", Mix_GetError());
     }
 
     return win;
@@ -99,7 +103,7 @@ void renderer_update_events_and_delta_time(window_t *window, renderer_t *rendere
     end = SDL_GetPerformanceCounter();
     window->delta_time = (float)(((end - start) * 1000) / (float)SDL_GetPerformanceFrequency());
 
-    window->keys = (Uint8*)SDL_GetKeyboardState(NULL);
+    window->keys = (Uint8 *)SDL_GetKeyboardState(NULL);
 }
 
 void renderer_present(renderer_t *renderer)
