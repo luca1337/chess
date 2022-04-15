@@ -1,6 +1,7 @@
 #include "context.h"
 #include "events.h"
 #include "private.h"
+#include "audio.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -25,6 +26,8 @@ window_t *window_new(unsigned int width, unsigned int height, const char *title)
         SDL_Log("Couldn't initialize SDL: [%s]", SDL_GetError());
         return NULL;
     }
+
+    initAudio();
 
     win->sdl_window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, 0x0);
     if (!win->sdl_window)

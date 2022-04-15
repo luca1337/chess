@@ -739,6 +739,7 @@ static char check_king_rescue(chess_piece_t* piece, board_t* board, cell_t* dest
 char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 {
     // the king can move to adjacent cells in all directions, by one square.
+    char is_castling_blocked = FALSE;
     piece->moves_number = 0;
 
     const int max_castling_steps = 2;
@@ -828,6 +829,7 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                             // totally in checkmate and the game is lost for that team.
                             piece->blocked_paths++;
                             piece->is_blocked = TRUE;
+                            is_castling_blocked = TRUE;
                             blocking_cell = board->cells[cellIdx];
                             break;
                         }
@@ -840,11 +842,18 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
                         if (!check_king_rescue(piece, board, current_cell))
                         {
+                            // Check if any of remaining friendly chess pieces can rescue the king by reaching the blocking enemy cell
                             if (check_king_rescue(piece, board, blocking_cell))
                             {
+                                // if we arrived here it doesn't mean that the king is in checkmate yet, because any of our chess piece may not reach the target 
+                                // but they could reach one of the adjacent's target cell and in this way prevent the king from being attacked
+
+                                // TODO: implement a check for the adjacent enemy cell to see whether we can reach them to protect the king
+
                                 goto exit;
                             }
                         }
+
 
                         break;
                     }
@@ -857,11 +866,15 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             }
 
             if (current_cell->is_occupied && (current_cell_piece->is_white == piece->is_white))
+            {
+                is_castling_blocked = TRUE;
                 break;
+            }
         }
         exit:
 
-#pragma region CASTLING
+        #pragma region CASTLING
+        // the castling must be blocked if among king and rook there is another pawn.
         if (!simulate)
         {
             int left_rook_idx = piece->is_white ? LOWER_LEFT_ROOK_INDEX : UPPER_LEFT_ROOK_INDEX;
@@ -870,22 +883,21 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             char check_long_castling = (move_direction == east && (board->cells[left_rook_idx]->entity && board->cells[left_rook_idx]->entity->piece_type == rook && board->cells[left_rook_idx]->entity->is_first_move));
             char check_short_castling = (move_direction == west && (board->cells[right_rook_idx]->entity && board->cells[right_rook_idx]->entity->piece_type == rook && board->cells[right_rook_idx]->entity->is_first_move));
 
-            if ((check_long_castling || check_short_castling) && piece->is_first_move && step < max_castling_steps)
+            if (!is_castling_blocked && (check_long_castling || check_short_castling) && piece->is_first_move && step < max_castling_steps)
             {
                 step++;
                 continue;
             }
         }
-#pragma endregion
+        #pragma endregion
         
         step = 1;
         move_direction++;
-        // piece->is_blocked = FALSE;
     }
 
     depth = 0;
 
-    // In this case the king will  be totally blocked and the game is ended
+    // In this case the king will  be totally blocked for now and the game is ended
     if (piece->blocked_paths > 0 && piece->moves_number == 0)
     {
         piece->is_blocked = TRUE;
