@@ -23,7 +23,7 @@
 
 # Support for Project snippet scope
 [Bb]in/*
-# ![Bb]in/.gitkeep
-![Bb]in/.dll
+![Bb]in/.gitkeep
+![Bb]in/*.dll
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode
