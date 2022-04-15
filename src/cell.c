@@ -32,18 +32,17 @@ void cell_highlight(cell_t* cell, float mouse_x, float mouse_y, color_t color)
 {
     SDL_assert_always(cell);
 
-    if ((mouse_x > cell->pos_x && mouse_x < (cell->pos_x + CELL_SZ)) && (mouse_y > cell->pos_y && (mouse_y < cell->pos_y + CELL_SZ)) && !previous_cell)
+    cell_t* current_cell = cell;
+
+    if ((mouse_x > current_cell->pos_x && mouse_x < (current_cell->pos_x + CELL_SZ)) && (mouse_y > current_cell->pos_y && (mouse_y < current_cell->pos_y + CELL_SZ)) && !previous_cell)
     {
         SDL_SetTextureColorMod(cell->cell_texture->texture, color.r, color.g, color.b);
-        previous_cell = cell;
+        previous_cell = current_cell;
     }
-    else
+
+    if (previous_cell && (memcmp(current_cell, previous_cell, sizeof(cell_t))))
     {
         // restore color of previous cell before selecting the new one
-
-        if (!previous_cell) 
-            return;
-
         SDL_SetTextureColorMod(previous_cell->cell_texture->texture, UCHAR_MAX, UCHAR_MAX, UCHAR_MAX);
         previous_cell = NULL;
     }

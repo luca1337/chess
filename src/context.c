@@ -64,7 +64,7 @@ renderer_t *renderer_new(window_t *window)
     renderer_t *rend = (renderer_t *)calloc(1, sizeof(renderer_t));
     CHECK(rend, NULL, "Couldn't allocate memory for renderer struct");
 
-    rend->sdl_renderer = SDL_CreateRenderer((SDL_Window *)window->sdl_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    rend->sdl_renderer = SDL_CreateRenderer((SDL_Window *)window->sdl_window, -1, SDL_RENDERER_ACCELERATED);
     if (!rend->sdl_renderer)
     {
         SDL_Log("Couldn't initialize SDL renderer: [%s]", SDL_GetError());
