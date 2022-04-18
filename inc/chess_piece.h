@@ -3,6 +3,7 @@
 
 #include "utils.h"
 #include "queue.h"
+#include "private.h"
 
 typedef struct board board_t;
 typedef struct cell cell_t;
@@ -17,6 +18,11 @@ typedef struct piece_move{
 piece_move_t* piece_move_new();
 void piece_move_destroy(piece_move_t* move);
 
+typedef struct chess_piece_move_data{
+    int index_array[MAX_QUEUE_SIZE];
+    int i, j;
+}chess_piece_move_data_t;
+
 typedef struct chess_piece{
     piece_type_t piece_type;
     texture_t* chess_texture;
@@ -30,12 +36,8 @@ typedef struct chess_piece{
     int score_value;
     int blocked_paths;
     char is_blocked;
-    int possible_squares[50];
-    int possible_squares_i;
-    int possible_squares_j;
-    int index_queue[50];
-    int index_queue_i;
-    int index_queue_j;
+    chess_piece_move_data_t possible_squares;
+    chess_piece_move_data_t index_queue;
     void(*draw)(struct chess_piece* piece);
     void(*set_position)(struct chess_piece* piece, int x, int y);
     char(*generate_legal_moves)(struct chess_piece* piece, board_t* board);

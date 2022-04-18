@@ -23,7 +23,7 @@ struct game_state{
     void(*on_state_enter)(game_t* game);
     game_state_t*(*on_state_update)(game_state_t* gs, game_t* game);
     void(*on_state_exit)(game_t* game);
-    game_state_t* next[2];
+    game_state_t* next[2]; // this should be a hashmap
 };
 
 game_state_t* game_state_new();

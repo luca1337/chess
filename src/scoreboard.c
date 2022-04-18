@@ -6,7 +6,7 @@
 
 void scoreboard_new(scoreboard_t* scoreboard)
 {
-    memset(scoreboard, 0, sizeof(scoreboard_t));
+    SDL_memset(scoreboard, 0, sizeof(scoreboard_t));
 
     scoreboard->white_player_score = text_new("../assets/fonts/Lato-Black.ttf", 16, "WHITE SCORE: 0", WHITE);
     scoreboard->black_player_score = text_new("../assets/fonts/Lato-Black.ttf", 16, "BLACK SCORE: 0", BLACK);
@@ -19,9 +19,9 @@ void scoreboard_update(scoreboard_t* scoreboard, player_t* player)
     const char* text = update_white_score ? "WHITE SCORE: %i" : "BLACK SCORE: %i";
     render_text_t* render_text = update_white_score ? scoreboard->white_player_score : scoreboard->black_player_score;
 
-    char buffer[256];
-    memset(buffer, 0, 256);
-    sprintf_s(buffer, 256, text, player->score);
+    char buffer[MAX_BUFFER_SIZE];
+    SDL_memset(buffer, 0, sizeof(char) * MAX_BUFFER_SIZE);
+    sprintf_s(buffer, MAX_BUFFER_SIZE, text, player->score);
     text_update(render_text, buffer);
 }
 

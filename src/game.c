@@ -32,6 +32,14 @@ static Mix_Chunk* error_fx = NULL;
 
 char played_sound = FALSE;
 
+#define SET_GAMEOVER_MSG(msg, white_player)\
+{\
+    char buffer[MAX_BUFFER_SIZE];\
+    SDL_memset(buffer, 0, sizeof(char) * MAX_BUFFER_SIZE);\
+    sprintf_s(buffer, MAX_BUFFER_SIZE, strcat_macro(msg, %s WINS!), white_player ? "WHITE" : "BLACK");\
+    text_update(gameover_text, buffer);\
+}
+
 static void recycle_textures(chess_piece_t *piece)
 {
     for (unsigned long i = 0ul; i != piece->moves_number; ++i)
@@ -72,7 +80,7 @@ static cell_t *find_matching_cell(game_t *game, size_t cell_index)
 
         for (unsigned long i = 0ul; i != game->current_piece->moves_number; ++i)
         {
-            if (!memcmp(game->current_piece->moves[i]->possible_cells, result, sizeof(cell_t)))
+            if (!SDL_memcmp(game->current_piece->moves[i]->possible_cells, result, sizeof(cell_t)))
             {
                 return result;
             }
@@ -98,7 +106,7 @@ static void handle_chess_piece_selection(game_t *game)
         cell_highlight(game->board->cells[current_cell_index], (float)mouse_x, (float)mouse_y, SELECTION_BLACK);
     }
 
-    if (mouse_state & SDL_BUTTON(1))
+    if (mouse_state & SDL_BUTTON(LMB_INDEX))
     {
         if (!game->current_piece)
         {
@@ -126,6 +134,9 @@ static void handle_chess_piece_selection(game_t *game)
                         if (game->current_piece->moves_number == 0 && game->current_piece->is_blocked)
                         {
                             SDL_Log("King is in CHECKMATE, Game Lost for: %s Team!", game->current_player->is_white ? "White" : "Black");
+                            printf("------------------------------------------\n");
+
+                            SET_GAMEOVER_MSG("KING CHECKMATE!", !game->current_player->is_white);
 
                             game->is_gameover = TRUE;
                             game->current_piece->is_blocked = FALSE;
@@ -158,13 +169,18 @@ static void handle_chess_piece_selection(game_t *game)
 
             if (found_cell)
             {
-                system("cls");
-
                 // set the position to the new found cell
                 game->current_piece->set_position(game->current_piece, found_cell->pos_x, found_cell->pos_y);
 
                 if (found_cell->is_occupied)
                 {
+                    if (found_cell->entity->piece_type == king)
+                    {
+                        SET_GAMEOVER_MSG("KING EATEN!", game->current_player->is_white);
+                        Mix_PlayChannel(-1, gameover_fx, FALSE);
+                        game->is_gameover = TRUE;
+                        return;
+                    }
                     Mix_PlayChannel(-1, eat_fx, FALSE);
 
                     game->current_player->score += found_cell->entity->score_value;
@@ -190,9 +206,9 @@ static void handle_chess_piece_selection(game_t *game)
 
                 const char *player_color = game->current_player->is_white ? "White" : "Black";
 
-#pragma region CASTLING
+                #pragma region CASTLING
                 enpassant_move_t ep_move;
-                memset(&ep_move, 0, sizeof(enpassant_move_t));
+                SDL_memset(&ep_move, 0, sizeof(enpassant_move_t));
 
                 if (game->current_piece->piece_type == king)
                 {
@@ -225,9 +241,9 @@ static void handle_chess_piece_selection(game_t *game)
                         chess_piece_set_entity_null(game->board, ep_move.rook_index);
                     }
                 }
-#pragma endregion
+                #pragma endregion
 
-#pragma region ENPASSANT
+                #pragma region ENPASSANT
                 if (game->current_piece->piece_type == pawn)
                 {
                     int index = game->current_piece->is_white ? current_cell_index + CELLS_PER_ROW : current_cell_index - CELLS_PER_ROW;
@@ -240,13 +256,14 @@ static void handle_chess_piece_selection(game_t *game)
                         chess_piece_set_entity_null(game->board, index);
 
                         SDL_Log("[[ENPASSANT]] from %s team!", player_color);
+                        printf("------------------------------------------\n");
 
                         // update scoreboard
                         game->current_player->score += enpassant_piece->score_value;
                         scoreboard_update(&game->scoreboard, game->current_player);
                     }
                 }
-#pragma endregion
+                #pragma endregion
 
                 game->current_piece->is_first_move = FALSE;
 
@@ -269,7 +286,6 @@ static void handle_chess_piece_selection(game_t *game)
             }
             else
             {
-                system("cls");
                 game->current_piece->set_position(game->current_piece, old_pos_x, old_pos_y);
             }
 
@@ -313,7 +329,10 @@ game_t *game_new()
 {
     game_t *game = (game_t *)calloc(1, sizeof(game_t));
     CHECK(game, NULL, "Couldn't allocate memory for game struct");
-    memset(game->game_states, 0, sizeof(game_state_t) * MAX_GAME_STATES);
+    for (unsigned long i = 0ul; i != MAX_GAME_STATES; ++i)
+    {
+        SDL_memset(game->game_states[i], 0, sizeof(game_state_t));
+    }
 
     return game;
 }
@@ -342,21 +361,24 @@ static void draw_promotion_pieces(game_t *game)
     {
         if (game->promotion_pieces[i])
         {
-            color_t color_mod = game->current_player->is_white ? GREEN : RED;
+            color_t color_mod = game->current_player->is_white ? WHITE : BLACK;
             SDL_SetTextureColorMod(game->promotion_pieces[i]->chess_texture->texture, color_mod.r, color_mod.g, color_mod.b);
             game->promotion_pieces[i]->draw(game->promotion_pieces[i]);
 
             // check if mouse is inside one of the available pieces to choose
             if ((mouse_x > game->promotion_pieces[i]->pos_x && (mouse_x < game->promotion_pieces[i]->pos_x + CELL_SZ)) && (mouse_y > game->promotion_pieces[i]->pos_y && mouse_y < (game->promotion_pieces[i]->pos_y + CELL_SZ)))
             {
-                if (mouse_state & SDL_BUTTON(1))
+                if (mouse_state & SDL_BUTTON(LMB_INDEX))
                 {
                     // promote pawn
                     Mix_PlayChannel(-1, rankup_fx, FALSE);
 
                     game->promoted_piece = chess_piece_new(game->promotion_pieces[i]->piece_type, game->promotion_pieces[i]->is_white, TRUE);
                     game->is_promoting_pawn = FALSE;
-                    memset(game->promotion_pieces, 0, sizeof(chess_piece_t) * PROMOTION_PIECES_COUNT);
+                    for (unsigned long promotionPieceIdx = 0; promotionPieceIdx < PROMOTION_PIECES_COUNT; promotionPieceIdx++)
+                    {
+                        SDL_memset(game->promotion_pieces[promotionPieceIdx], 0, sizeof(chess_piece_t));
+                    }
                     break;
                 }
             }
@@ -392,6 +414,8 @@ static game_state_t *state_setup_update(game_state_t *gs, game_t *game)
 void state_setup_exit(game_t *game)
 {
 }
+
+
 
 // PLAY STATE
 
@@ -444,10 +468,6 @@ void state_promote_pawn_exit(game_t *game)
 
 void state_gameover_enter(game_t *game)
 {
-    char buffer[64];
-    memset(buffer, 0, sizeof(char) * 64);
-    sprintf_s(buffer, 64, "KING CHECKMATE! %s WINS!", game->current_player->is_white ? "BLACK" : "WHITE");
-    text_update(gameover_text, buffer);
 }
 
 game_state_t *state_gameover_update(game_state_t *gs, game_t *game)
@@ -475,6 +495,10 @@ void state_gameover_exit(game_t *game)
     game->is_gameover = FALSE;
     game_reset_state(game);
 }
+
+// -- END GAME STATES
+
+
 
 void game_init(game_t *game)
 {
