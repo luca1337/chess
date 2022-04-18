@@ -8,15 +8,15 @@ void scoreboard_new(scoreboard_t* scoreboard)
 {
     memset(scoreboard, 0, sizeof(scoreboard_t));
 
-    scoreboard->white_player_score = text_new("../assets/fonts/Lato-Black.ttf", 16, "White score: 0", GREEN);
-    scoreboard->black_player_score = text_new("../assets/fonts/Lato-Black.ttf", 16, "Black score: 0", RED);
+    scoreboard->white_player_score = text_new("../assets/fonts/Lato-Black.ttf", 16, "WHITE SCORE: 0", WHITE);
+    scoreboard->black_player_score = text_new("../assets/fonts/Lato-Black.ttf", 16, "BLACK SCORE: 0", BLACK);
 }
 
 void scoreboard_update(scoreboard_t* scoreboard, player_t* player)
 {
     char update_white_score = player && player->is_white;
 
-    const char* text = update_white_score ? "White score: %i" : "Black score: %i";
+    const char* text = update_white_score ? "WHITE SCORE: %i" : "BLACK SCORE: %i";
     render_text_t* render_text = update_white_score ? scoreboard->white_player_score : scoreboard->black_player_score;
 
     char buffer[256];
@@ -33,8 +33,8 @@ void scoreboard_render(scoreboard_t* scoreboard)
 
 void scoreboard_reset_state(scoreboard_t* scoreboard)
 {
-    text_update(scoreboard->white_player_score, "White score: 0");
-    text_update(scoreboard->black_player_score, "Black score: 0");
+    text_update(scoreboard->white_player_score, "WHITE SCORE: 0");
+    text_update(scoreboard->black_player_score, "BLACK SCORE: 0");
 }
 
 void scoreboard_destroy(scoreboard_t* scoreboard)

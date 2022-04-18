@@ -79,8 +79,6 @@ renderer_t *renderer_new(window_t *window)
 
 void renderer_update_events_and_delta_time(window_t *window, renderer_t *renderer)
 {
-    SDL_PumpEvents();
-
     // manage events better than this shit
     SDL_Event ev;
     while (SDL_PollEvent(&ev))

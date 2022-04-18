@@ -868,7 +868,8 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                             if (check_king_rescue(piece, board, blocking_cell))
                             {
                                 // if we arrived here it doesn't mean that the king is in checkmate yet, because any of our chess piece may not reach the target 
-                                // but they could reach one of the adjacent's target cell and in this way prevent the king from being attacked
+                                // but they could reach one of the adjacent's target cell and in this way prevent the king from being attacked also we could just 
+                                // not move the king to prevent the checkmate
 
                                 // TODO: implement a check for the adjacent enemy cell to see whether we can reach them to protect the king
 
@@ -906,7 +907,7 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
     depth = 0;
 
-    // In this case the king will  be totally blocked for now and the game is ended
+    // In this case the king will be totally blocked for now and the game is ended
     if (piece->blocked_paths > 0 && piece->moves_number == 0)
     {
         piece->is_blocked = TRUE;

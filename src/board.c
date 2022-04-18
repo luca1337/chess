@@ -44,7 +44,6 @@ static void _draw_board(struct board *board)
 static void place_chess_piece(board_t *board, unsigned index, vec2_t position, piece_type_t type, char is_upper_board)
 {
     chess_piece_t *piece = chess_piece_new(type, !is_upper_board, TRUE);
-    piece->is_active = TRUE;
     piece->set_position(piece, (int)position.xy[0], (int)position.xy[1]);
     board->cells[index]->entity = piece;
     board->cells[index]->is_occupied = TRUE;

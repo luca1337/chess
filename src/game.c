@@ -85,7 +85,7 @@ static cell_t *find_matching_cell(game_t *game, size_t cell_index)
 static void handle_chess_piece_selection(game_t *game)
 {
     int mouse_x, mouse_y;
-    SDL_GetMouseState(&mouse_x, &mouse_y);
+    Uint32 mouse_state = SDL_GetMouseState(&mouse_x, &mouse_y);
 
     if (mouse_y >= SCREEN_H)
         return;
@@ -98,7 +98,7 @@ static void handle_chess_piece_selection(game_t *game)
         cell_highlight(game->board->cells[current_cell_index], (float)mouse_x, (float)mouse_y, SELECTION_BLACK);
     }
 
-    if (is_mouse_button_down(events))
+    if (mouse_state & SDL_BUTTON(1))
     {
         if (!game->current_piece)
         {
@@ -336,9 +336,9 @@ static void draw_promotion_pieces(game_t *game)
 {
     // draw pawn promotion textures
     int mouse_x, mouse_y;
-    SDL_GetMouseState(&mouse_x, &mouse_y);
+    Uint32 mouse_state = SDL_GetMouseState(&mouse_x, &mouse_y);
 
-    for (unsigned long i = 0ul; i < PROMOTION_PIECES_COUNT; i++)
+    for (unsigned long i = 0ul; i != PROMOTION_PIECES_COUNT; ++i)
     {
         if (game->promotion_pieces[i])
         {
@@ -349,7 +349,7 @@ static void draw_promotion_pieces(game_t *game)
             // check if mouse is inside one of the available pieces to choose
             if ((mouse_x > game->promotion_pieces[i]->pos_x && (mouse_x < game->promotion_pieces[i]->pos_x + CELL_SZ)) && (mouse_y > game->promotion_pieces[i]->pos_y && mouse_y < (game->promotion_pieces[i]->pos_y + CELL_SZ)))
             {
-                if (is_mouse_button_down(events))
+                if (mouse_state & SDL_BUTTON(1))
                 {
                     // promote pawn
                     Mix_PlayChannel(-1, rankup_fx, FALSE);
@@ -452,9 +452,9 @@ void state_gameover_enter(game_t *game)
 
 game_state_t *state_gameover_update(game_state_t *gs, game_t *game)
 {
-    // TODO: must implement a better way to manage game reset, right now we are alloc/dealloc memory continuously
+    // TODO: must implement a better way to manage game reset, right now we are alloc/dealloc memory frequently
     // and that will cause memory fragmentation, this is not what we want, we should pool memory instead. Right now
-    // Whenever the game is ended, a new board is initialized by calling malloc on all cells/pieces/textures.
+    // Whenever the game is ended, a new board is initialized by calling memalloc on all cells/pieces/textures.
 
     if (window->keys[SDL_SCANCODE_SPACE])
     {
