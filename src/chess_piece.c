@@ -806,13 +806,7 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             if (current_cell->is_occupied && (current_cell_piece->is_white == piece->is_white))
             {
                 // if we arrived on the last step and the rook is present, king can castle.
-                if ( (step == 4 && check_left_castling) && (current_cell->entity && current_cell->entity->piece_type == rook))
-                {
-                    can_castle = TRUE;
-                    break;
-                }
-
-                if ( (step == 3 && check_right_castling) && (current_cell->entity && current_cell->entity->piece_type == rook))
+                if ( ((step == 4 && check_left_castling) || (step == 3 && check_right_castling)) && (current_cell->entity && current_cell->entity->piece_type == rook))
                 {
                     can_castle = TRUE;
                     break;

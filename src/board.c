@@ -88,11 +88,11 @@ static void board_init(board_t* board)
             {
             default:                                                                             break;
             case rook:    place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
-            case knight:  place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
-            case bishop:  place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
-            case queen:   place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
+            // case knight:  place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
+            // case bishop:  place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
+            // case queen:   place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
             case king:    place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
-            case pawn:    place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
+            // case pawn:    place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
             }
         }
     }
