@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sglib.h>
+
 extern events_t *events;
 extern queue_t *texture_queue;
 
@@ -86,7 +88,9 @@ static char allocate_legal_moves(chess_piece_t* piece, board_t* board, char simu
 {
     // if no moves are available just go out and this pawn cannot move.
     if (piece->moves_number == 0)
+    {
         return FALSE;
+    }
 
     // We distinguish the simulation because, in this case, we only care abouts "indexes" of the board
     // that the pawn could go if moved. This piece of code is called only when the king is selected and
@@ -94,15 +98,14 @@ static char allocate_legal_moves(chess_piece_t* piece, board_t* board, char simu
     // in the next turn, to se whether the king will be in checkmate.
     if (simulate)
     {
-        // TODO: implement memory pool also here. Again, allocating each time this piece of memory is not correct at all. 
-        piece->possible_squares = (int*)calloc(piece->moves_number, sizeof(int) * piece->moves_number);
-        CHECK(piece->possible_squares, NULL, "Couldn't allocate memory for piece->possible_squares");
+        // TODO: implement memory pool also here. Again, allocating each time this piece of memory is not correct at all.
+        SGLIB_QUEUE_INIT(int, piece->possible_squares, piece->possible_squares_i, piece->possible_squares_j);
 
         for (unsigned long i = 0ul; i < piece->moves_number; ++i)
         {
-            const int index = queue_peek(piece->index_queue);
-            piece->possible_squares[i] = index;
-            queue_dequeue(piece->index_queue);
+            const int index = SGLIB_QUEUE_FIRST_ELEMENT(int, piece->index_queue, piece->index_queue_i, piece->index_queue_j);
+            SGLIB_QUEUE_ADD(int, piece->possible_squares, index, piece->possible_squares_i, piece->possible_squares_j, 50);
+            SGLIB_QUEUE_DELETE(int, piece->index_queue, piece->index_queue_i, piece->index_queue_j, 50);
         }
     }
     else
@@ -113,13 +116,13 @@ static char allocate_legal_moves(chess_piece_t* piece, board_t* board, char simu
 
         for (unsigned long i = 0ul; i < piece->moves_number; ++i)
         {
-            const int index = queue_peek(piece->index_queue);
+            const int index = SGLIB_QUEUE_FIRST_ELEMENT(int, piece->index_queue, piece->index_queue_i, piece->index_queue_j);
 
             piece->moves[i] = piece_move_new();
             piece->moves[i]->possible_cells = board->cells[index];
             piece->moves[i]->markers->set_position(piece->moves[i]->markers, piece->moves[i]->possible_cells->pos_x, piece->moves[i]->possible_cells->pos_y);
 
-            queue_dequeue(piece->index_queue);
+            SGLIB_QUEUE_DELETE(int, piece->index_queue, piece->index_queue_i, piece->index_queue_j, 50);
         }
     }
 
@@ -141,7 +144,8 @@ char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
     // se è la prima volta che muovo la pedina, posso suggerire due caselle in verticale ( solo x muovermi e non x mangiare )
     // invece le caselle in diagonale possono sempre essere suggerite in quanto servono solo per mangiare e non per spostarsi liberamente
-    piece->index_queue = queue_new(diagonal_moves_count + vertical_moves_count, sizeof(int) * (diagonal_moves_count + vertical_moves_count));
+    SGLIB_QUEUE_INIT(int, piece->index_queue, piece->index_queue_i, piece->index_queue_j);
+    // piece->piece->index_queue = queue_new(diagonal_moves_count + vertical_moves_count, sizeof(int) * (diagonal_moves_count + vertical_moves_count));
 
     // vertical squares
     const int first_vert_idx = is_white ? get_cell_index_by_piece_position(piece, -0, -1) : get_cell_index_by_piece_position(piece, +0, +1);
@@ -193,7 +197,7 @@ char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                 {
                     matrix_index = is_white ? matrix_index - CELLS_PER_ROW : matrix_index + CELLS_PER_ROW;
 
-                    queue_enqueue(piece->index_queue, matrix_index);
+                    SGLIB_QUEUE_ADD(int, piece->index_queue, matrix_index, piece->index_queue_i, piece->index_queue_j, 50);
                     piece->moves_number++;
                     continue;
                 }
@@ -217,7 +221,7 @@ char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             }
         }
 
-        queue_enqueue(piece->index_queue, matrix_index);
+        SGLIB_QUEUE_ADD(int, piece->index_queue, matrix_index, piece->index_queue_i, piece->index_queue_j, 50);
         piece->moves_number++;
     }
 
@@ -231,9 +235,7 @@ char get_knight_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     // reset variables
     piece->moves_number = 0;
 
-    const int max_moves = 10;
-
-    piece->index_queue = queue_new(max_moves, sizeof(int) * max_moves);
+    SGLIB_QUEUE_INIT(int, piece->index_queue, piece->index_queue_i, piece->index_queue_j);
 
     // we precalculate all the possible indexes that the piece could move on
     // and since the knight can jump over the piece, we don't actually care to
@@ -315,7 +317,7 @@ char get_knight_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             if (!current_cell->is_occupied || (current_cell->is_occupied && ((current_cell_piece->is_white != piece->is_white))))
             {
                 // Eneueue the cell index only if this condition is satisfied, that means, this index will be part of legal moves
-                queue_enqueue(piece->index_queue, possible_square);
+                SGLIB_QUEUE_ADD(int, piece->index_queue, possible_square, piece->index_queue_i, piece->index_queue_j, 50);
                 piece->moves_number++;
                 break;
             }
@@ -334,17 +336,13 @@ char get_queen_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 {
     piece->moves_number = 0;
 
-    const int max_steps = 7;
-    const int max_queen_moves = max_steps * MAX_DIR;
-
-    piece->index_queue = queue_new(max_queen_moves, sizeof(int) * max_queen_moves);
+    SGLIB_QUEUE_INIT(int, piece->index_queue, piece->index_queue_i, piece->index_queue_j);
 
     // indice corrente della pedina nella matrice 8x8
     int piece_index = ((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ);
 
     // the queen can move along all the six direction as far as possible until she encounter her ally or an enemy
     // we must check every possible direction starting from the nearest one
-
     // This algorithm can be simplified a lot, but for now let's leave it like it is.
 
     // turning from east to sout-east all aorund in a clock-wise order
@@ -373,14 +371,14 @@ char get_queen_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
                 if (is_current_cell_near_bounds && ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white) || !current_cell->is_occupied))
                 {
-                    queue_enqueue(piece->index_queue, matrix_index);
+                    SGLIB_QUEUE_ADD(int, piece->index_queue, matrix_index, piece->index_queue_i, piece->index_queue_j, 50);
                     piece->moves_number++;
                     break;
                 }
 
                 if (current_cell->is_occupied && current_cell_piece->is_white != piece->is_white)
                 {
-                    queue_enqueue(piece->index_queue, matrix_index);
+                    SGLIB_QUEUE_ADD(int, piece->index_queue, matrix_index, piece->index_queue_i, piece->index_queue_j, 50);
                     piece->moves_number++;
                     break;
                 }
@@ -388,7 +386,7 @@ char get_queen_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                 if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white))
                     break;
 
-                queue_enqueue(piece->index_queue, matrix_index);
+                SGLIB_QUEUE_ADD(int, piece->index_queue, matrix_index, piece->index_queue_i, piece->index_queue_j, 50);
 
                 step++;
                 piece->moves_number++;
@@ -410,14 +408,14 @@ char get_queen_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
                 if (is_cell_near_lateral_bounds && ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white) || !current_cell->is_occupied))
                 {
-                    queue_enqueue(piece->index_queue, matrix_index);
+                    SGLIB_QUEUE_ADD(int, piece->index_queue, matrix_index, piece->index_queue_i, piece->index_queue_j, 50);
                     piece->moves_number++;
                     break;
                 }
 
                 if (current_cell->is_occupied && current_cell_piece->is_white != piece->is_white)
                 {
-                    queue_enqueue(piece->index_queue, matrix_index);
+                    SGLIB_QUEUE_ADD(int, piece->index_queue, matrix_index, piece->index_queue_i, piece->index_queue_j, 50);
                     piece->moves_number++;
                     break;
                 }
@@ -425,7 +423,7 @@ char get_queen_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                 if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white))
                     break;
 
-                queue_enqueue(piece->index_queue, matrix_index);
+                SGLIB_QUEUE_ADD(int, piece->index_queue, matrix_index, piece->index_queue_i, piece->index_queue_j, 50);
 
                 piece_index = matrix_index;
 
@@ -447,14 +445,14 @@ char get_queen_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                 if ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white))
                 {
                     piece->moves_number++;
-                    queue_enqueue(piece->index_queue, matrix_index);
+                    SGLIB_QUEUE_ADD(int, piece->index_queue, matrix_index, piece->index_queue_i, piece->index_queue_j, 50);
                     break;
                 }
 
                 if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white))
                     break;
 
-                queue_enqueue(piece->index_queue, matrix_index);
+                SGLIB_QUEUE_ADD(int, piece->index_queue, matrix_index, piece->index_queue_i, piece->index_queue_j, 50);
 
                 step++;
                 piece->moves_number++;
@@ -476,14 +474,14 @@ char get_queen_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
                 if (is_cell_near_lateral_bounds && ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white) || !current_cell->is_occupied))
                 {
-                    queue_enqueue(piece->index_queue, matrix_index);
+                    SGLIB_QUEUE_ADD(int, piece->index_queue, matrix_index, piece->index_queue_i, piece->index_queue_j, 50);
                     piece->moves_number++;
                     break;
                 }
 
                 if ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white))
                 {
-                    queue_enqueue(piece->index_queue, matrix_index);
+                    SGLIB_QUEUE_ADD(int, piece->index_queue, matrix_index, piece->index_queue_i, piece->index_queue_j, 50);
                     piece->moves_number++;
                     break;
                 }
@@ -491,7 +489,7 @@ char get_queen_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                 if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white))
                     break;
 
-                queue_enqueue(piece->index_queue, matrix_index);
+                SGLIB_QUEUE_ADD(int, piece->index_queue, matrix_index, piece->index_queue_i, piece->index_queue_j, 50);
 
                 piece_index = matrix_index;
 
@@ -513,11 +511,7 @@ char get_rook_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 {
     piece->moves_number = 0;
 
-    const int max_steps = 7;
-    const int max_directions = 4;
-    const int max_rook_moves = max_steps * max_directions;
-
-    piece->index_queue = queue_new(max_rook_moves, sizeof(int) * max_rook_moves);
+    SGLIB_QUEUE_INIT(int, piece->index_queue, piece->index_queue_i, piece->index_queue_j);
 
     // indice corrente della pedina nella matrice 8x8
     int piece_index = ((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ);
@@ -558,7 +552,7 @@ char get_rook_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
                 if (is_current_cell_near_bounds && ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white) || !current_cell->is_occupied))
                 {
-                    queue_enqueue(piece->index_queue, cell_index);
+                    SGLIB_QUEUE_ADD(int, piece->index_queue, cell_index, piece->index_queue_i, piece->index_queue_j, 50);
                     piece->moves_number++;
                     break;
                 }
@@ -578,7 +572,7 @@ char get_rook_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
             if (current_cell->is_occupied && current_cell_piece->is_white != piece->is_white)
             {
-                queue_enqueue(piece->index_queue, cell_index);
+                SGLIB_QUEUE_ADD(int, piece->index_queue, cell_index, piece->index_queue_i, piece->index_queue_j, 50);
                 piece->moves_number++;
                 break;
             }
@@ -586,7 +580,7 @@ char get_rook_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white))
                 break;
 
-            queue_enqueue(piece->index_queue, cell_index);
+            SGLIB_QUEUE_ADD(int, piece->index_queue, cell_index, piece->index_queue_i, piece->index_queue_j, 50);
 
             step++;
             piece->moves_number++;
@@ -606,11 +600,7 @@ char get_bishop_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 {
     piece->moves_number = 0;
 
-    const int max_steps = 7;
-    const int max_directions = 4;
-    const int max_bishop_moves = max_steps * max_directions;
-
-    piece->index_queue = queue_new(max_bishop_moves, sizeof(int) * max_bishop_moves);
+    SGLIB_QUEUE_INIT(int, piece->index_queue, piece->index_queue_i, piece->index_queue_j);
 
     int piece_index = ((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ);
 
@@ -640,14 +630,14 @@ char get_bishop_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
                 if (is_cell_near_lateral_bounds && ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white) || !current_cell->is_occupied))
                 {
-                    queue_enqueue(piece->index_queue, cell_index);
+                    SGLIB_QUEUE_ADD(int, piece->index_queue, cell_index, piece->index_queue_i, piece->index_queue_j, 50);
                     piece->moves_number++;
                     break;
                 }
 
                 if (current_cell->is_occupied && current_cell_piece->is_white != piece->is_white)
                 {
-                    queue_enqueue(piece->index_queue, cell_index);
+                    SGLIB_QUEUE_ADD(int, piece->index_queue, cell_index, piece->index_queue_i, piece->index_queue_j, 50);
                     piece->moves_number++;
                     break;
                 }
@@ -655,7 +645,7 @@ char get_bishop_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                 if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white))
                     break;
 
-                queue_enqueue(piece->index_queue, cell_index);
+                SGLIB_QUEUE_ADD(int, piece->index_queue, cell_index, piece->index_queue_i, piece->index_queue_j, 50);
 
                 piece_index = cell_index;
 
@@ -679,14 +669,14 @@ char get_bishop_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
                 if (is_cell_near_lateral_bounds && ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white) || !current_cell->is_occupied))
                 {
-                    queue_enqueue(piece->index_queue, cell_index);
+                    SGLIB_QUEUE_ADD(int, piece->index_queue, cell_index, piece->index_queue_i, piece->index_queue_j, 50);
                     piece->moves_number++;
                     break;
                 }
 
                 if ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white))
                 {
-                    queue_enqueue(piece->index_queue, cell_index);
+                    SGLIB_QUEUE_ADD(int, piece->index_queue, cell_index, piece->index_queue_i, piece->index_queue_j, 50);
                     piece->moves_number++;
                     break;
                 }
@@ -694,7 +684,7 @@ char get_bishop_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                 if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white))
                     break;
 
-                queue_enqueue(piece->index_queue, cell_index);
+                SGLIB_QUEUE_ADD(int, piece->index_queue, cell_index, piece->index_queue_i, piece->index_queue_j, 50);
 
                 piece_index = cell_index;
 
@@ -742,10 +732,9 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     char is_castling_blocked = FALSE;
     piece->moves_number = 0;
 
-    const int max_moves = 8;
     char can_castle = 0;
 
-    piece->index_queue = queue_new(max_moves, sizeof(int) * max_moves);
+    SGLIB_QUEUE_INIT(int, piece->index_queue, piece->index_queue_i, piece->index_queue_j);
 
     // precalculate possible squares
     const int lefx_idx        = get_cell_index_by_piece_position(piece, -1, -0);
@@ -870,14 +859,13 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                                 goto exit;
                             }
                         }
-
                         break;
                     }
                 }
                 
                 if (step == 1)
                 {
-                    queue_enqueue(piece->index_queue, possible_square);
+                    SGLIB_QUEUE_ADD(int, piece->index_queue, possible_square, piece->index_queue_i, piece->index_queue_j, 50);
                     piece->moves_number++;
                     piece->is_blocked = FALSE;
                 }
@@ -889,7 +877,7 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
         {
             int possible_square = is_east ? get_cell_index_by_piece_position(piece, -2, -0) : get_cell_index_by_piece_position(piece, +2, +0);
 
-            queue_enqueue(piece->index_queue, possible_square);
+            SGLIB_QUEUE_ADD(int, piece->index_queue, possible_square, piece->index_queue_i, piece->index_queue_j, 50);
             piece->moves_number++;
         }
         exit:
@@ -988,13 +976,17 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
     {
         for (unsigned long i = 0ul; i < piece->moves_number; ++i)
         {
-            const int index_to_look = piece->possible_squares[i];
-            const cell_t *const cell_to_look = board->cells[index_to_look];
-
-            if (!memcmp(cell_to_look, destination, sizeof(cell_t)))
+            if (!SGLIB_QUEUE_IS_EMPTY(int, piece->possible_squares, piece->possible_squares_i, piece->possible_squares_j))
             {
-                SDL_Log("[[CHECK CHECKMATE]]: [%s] [%s] can move on index: [%i]", player_color, chess_piece_to_string(piece), index_to_look);
-                return TRUE;
+                int index_to_look = SGLIB_QUEUE_FIRST_ELEMENT(int, piece->possible_squares, piece->possible_squares_i, piece->possible_squares_j);
+                SGLIB_QUEUE_DELETE(int, piece->possible_squares, piece->possible_squares_i, piece->possible_squares_j, 50);
+                const cell_t *const cell_to_look = board->cells[index_to_look];
+
+                if (!memcmp(cell_to_look, destination, sizeof(cell_t)))
+                {
+                    SDL_Log("[[CHECK CHECKMATE]]: [%s] [%s] can move on index: [%i]", player_color, chess_piece_to_string(piece), index_to_look);
+                    return TRUE;
+                }
             }
         }
     }

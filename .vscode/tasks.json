@@ -17,6 +17,7 @@
                 "-L${workspaceFolder}/External/SDL2_ttf/lib/x64",
                 "-I${workspaceFolder}/External/SDL2_mixer/include",
                 "-L${workspaceFolder}/External/SDL2_mixer/lib/x64",
+                "-I${workspaceFolder}/External/sglib-1.0.4",
                 "-lSDL2",
                 "-lSDL2main",
                 "-lSDL2_image",

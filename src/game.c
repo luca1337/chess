@@ -115,8 +115,8 @@ static void handle_chess_piece_selection(game_t *game)
                 {
                     game->current_piece = current_chess_piece;
                     old_piece_cell_index = current_cell_index;
-                    old_pos_x = (int)game->current_piece->pos_x;
-                    old_pos_y = (int)game->current_piece->pos_y;
+                    old_pos_x = game->current_piece->pos_x;
+                    old_pos_y = game->current_piece->pos_y;
 
                     game->current_piece->generate_legal_moves(game->current_piece, game->board);
 

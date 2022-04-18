@@ -21,8 +21,6 @@ typedef struct chess_piece{
     piece_type_t piece_type;
     texture_t* chess_texture;
     piece_move_t** moves;
-    queue_t* index_queue;
-    int* possible_squares;
     unsigned long moves_number;
     char is_white;
     char is_first_move;
@@ -32,6 +30,12 @@ typedef struct chess_piece{
     int score_value;
     int blocked_paths;
     char is_blocked;
+    int possible_squares[50];
+    int possible_squares_i;
+    int possible_squares_j;
+    int index_queue[50];
+    int index_queue_i;
+    int index_queue_j;
     void(*draw)(struct chess_piece* piece);
     void(*set_position)(struct chess_piece* piece, int x, int y);
     char(*generate_legal_moves)(struct chess_piece* piece, board_t* board);
