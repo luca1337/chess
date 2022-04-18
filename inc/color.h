@@ -20,4 +20,6 @@ static const color_t BLUE = {0, 0, 0xFF, 0xFF};
 
 static const color_t TURN = {0xFF, 0xFF, 0xFF, 0xFF};
 
+static const color_t SELECTION_BLACK = {125, 125, 125, 0xFF};
+
 #endif

@@ -46,7 +46,7 @@ float vec2_slow_len(vec2_t v)
 
 float vec2_fast_len(vec2_t v)
 {
-    return (pow(v.xy[0], 2) + pow(v.xy[1], 2));
+    return (float)(pow(v.xy[0], 2) + pow(v.xy[1], 2));
 }
 
 vec2_t vec2_normalize(vec2_t v)

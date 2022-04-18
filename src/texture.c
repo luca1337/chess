@@ -1,4 +1,5 @@
 #include "texture.h"
+#include "private.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -9,39 +10,6 @@
 #include "stb_image.h"
 
 extern renderer_t *renderer;
-
-/*static void _load_from_file(const char *path, struct texture *out_texture)
-{
-    int tex_width, tex_height, channels_count;
-    unsigned char *bitmap = stbi_load(path, &tex_width, &tex_height, &channels_count, STBI_rgb_alpha);
-    if (!bitmap)
-    {
-        SDL_Log("Unable to load texture");
-        return;
-    }
-
-    out_texture->texture = SDL_CreateTexture((SDL_Renderer *)renderer->sdl_renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_STREAMING, tex_width, tex_height);
-
-    int pitch = 0;
-    unsigned char *pixels = NULL;
-
-    // temporary lock texture for writing pixels
-    if (SDL_LockTexture(out_texture->texture, NULL, (void **)&pixels, &pitch))
-    {
-        SDL_Log("Unable to lock texture: %s", SDL_GetError());
-        return;
-    }
-
-    memset(pixels, 0, tex_width * tex_height * channels_count);
-    memcpy(pixels, bitmap, tex_width * tex_height * channels_count);
-    SDL_SetTextureBlendMode(out_texture->texture, SDL_BLENDMODE_BLEND);
-    SDL_UnlockTexture(out_texture->texture);
-
-    out_texture->width = tex_width;
-    out_texture->height = tex_height;
-    out_texture->quad.w = tex_width;
-    out_texture->quad.h = tex_height;
-}*/
 
 void _render(struct texture *texture, uint8_t alpha, SDL_Rect *clip)
 {
@@ -64,7 +32,7 @@ void _set_position(struct texture *texture, int x, int y)
     texture->quad.y = y;
 }
 
-void _set_size(struct texture *texture, float width, float height)
+void _set_size(struct texture *texture, int width, int height)
 {
     texture->quad.w = width;
     texture->quad.h = height;
@@ -73,6 +41,7 @@ void _set_size(struct texture *texture, float width, float height)
 texture_t *texture_create_raw(uint32_t width, uint32_t height, color_t color)
 {
     texture_t *texture = (texture_t*)calloc(1, sizeof(texture_t));
+    CHECK(texture, NULL, "Couldn't allocate memory for struct texture");
     texture->render = _render;
     texture->set_position = _set_position;
     texture->set_size = _set_size;
@@ -96,9 +65,9 @@ texture_t *texture_create_raw(uint32_t width, uint32_t height, color_t color)
 
     unsigned char colors[4] = {color.r, color.g, color.b, color.a};
 
-    for (int y = 0; y < width; ++y)
+    for (uint32_t y = 0; y != width; ++y)
     {
-        for (int x = 0; x < height; ++x)
+        for (uint32_t x = 0; x != height; ++x)
         {
             memcpy(&pixels[(y * height + x) * sizeof(color)], colors, sizeof(color));
         }
@@ -118,6 +87,7 @@ texture_t *texture_create_raw(uint32_t width, uint32_t height, color_t color)
 texture_t *texture_load_from_file(const char *path, const char use_blending)
 {
     texture_t *texture = (texture_t*)calloc(1, sizeof(texture_t));
+    CHECK(texture, NULL, "Couldn't allocate memory for struct texture");
     texture->render = _render;
     texture->set_position = _set_position;
     texture->set_size = _set_size;

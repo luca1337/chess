@@ -27,11 +27,7 @@ render_text_t *text_new(const char *font, uint16_t font_size, const char *text, 
 
 void text_draw(render_text_t *render_text, int screen_x, int screen_y)
 {
-    if (!render_text)
-    {
-        printf("Text pointer is null, please use text_new() predicate, before calling text_draw!!\n");
-        return;
-    }
+    SDL_assert_always(render_text);
 
     SDL_Rect dstrect = {screen_x, screen_y, render_text->width, render_text->height};
     SDL_RenderCopy((SDL_Renderer *)renderer->sdl_renderer, render_text->copy_texture, NULL, &dstrect);
@@ -41,6 +37,9 @@ void text_update(render_text_t *render_text, char *new_text)
 {
     SDL_FreeSurface(render_text->text_surface);
     SDL_DestroyTexture(render_text->copy_texture);
+
+    render_text->text_surface = NULL;
+    render_text->copy_texture = NULL;
 
     render_text->text_surface = TTF_RenderText_Blended(render_text->font, new_text, render_text->color);
     render_text->copy_texture = SDL_CreateTextureFromSurface((SDL_Renderer *)renderer->sdl_renderer, render_text->text_surface);

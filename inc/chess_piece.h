@@ -23,13 +23,13 @@ typedef struct chess_piece{
     piece_move_t** moves;
     queue_t* index_queue;
     int* possible_squares;
-    int moves_number;
+    unsigned long moves_number;
     char is_white;
     char is_first_move;
     char is_enpassant;
     char is_castling;
     char is_active;
-    float pos_x, pos_y;
+    int pos_x, pos_y;
     int score_value;
     int blocked_paths;
     char is_blocked;

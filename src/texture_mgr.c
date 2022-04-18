@@ -20,7 +20,7 @@ texture_t* add_texture(texture_mgr_t* t_mgr, const char* key, const char* path)
 {
     texture_t* texture = texture_load_from_file(path, 1);
 
-    int len = strlen(key);
+    size_t len = strlen(key);
     char* buf = malloc(len + 1);
     strcpy_s(buf, len + 1, key);
 

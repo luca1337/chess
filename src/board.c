@@ -32,7 +32,7 @@ static void _draw_board(struct board *board)
     // draw pieces
     for (unsigned long chessIndex = 0ul; chessIndex < BOARD_SZ; chessIndex++)
     {
-        chess_piece_t *current_piece = (chess_piece_t *)board->cells[chessIndex]->entity;
+        chess_piece_t *current_piece = board->cells[chessIndex]->entity;
 
         if (current_piece != NULL)
         {
@@ -45,14 +45,14 @@ static void place_chess_piece(board_t *board, unsigned index, vec2_t position, p
 {
     chess_piece_t *piece = chess_piece_new(type, !is_upper_board, TRUE);
     piece->is_active = TRUE;
-    piece->set_position(piece, position.xy[0], position.xy[1]);
+    piece->set_position(piece, (int)position.xy[0], (int)position.xy[1]);
     board->cells[index]->entity = piece;
     board->cells[index]->is_occupied = TRUE;
 }
 
 static void board_init(board_t* board)
 {
-    color_t cell_color = color_create(0.0f, 0.0f, 0.0f, 1.0f);
+    color_t cell_color = color_create(0, 0, 0, 0);
 
     // place down board cells
     for (unsigned long columnIndex = 0ul; columnIndex != CELLS_PER_ROW; ++columnIndex)
@@ -68,7 +68,7 @@ static void board_init(board_t* board)
             const int pos_x = (cell_index % CELLS_PER_ROW) * CELL_SZ;
             const int pos_y = (cell_index / CELLS_PER_ROW) * CELL_SZ;
 
-            const vec2_t position = vec2_create(pos_x, pos_y);
+            const vec2_t position = vec2_create((float)pos_x, (float)pos_y);
             const vec2_t cell_size = vec2_create(CELL_SZ, CELL_SZ);
 
             // swap color based on cell oddity/evenly

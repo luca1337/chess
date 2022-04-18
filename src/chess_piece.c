@@ -742,8 +742,8 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     char is_castling_blocked = FALSE;
     piece->moves_number = 0;
 
-    const int max_castling_steps = 2;
     const int max_moves = 8;
+    char can_castle = 0;
 
     piece->index_queue = queue_new(max_moves, sizeof(int) * max_moves);
 
@@ -757,12 +757,22 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     const int down_idx        = get_cell_index_by_piece_position(piece, +0, +1);
     const int down_left_idx   = get_cell_index_by_piece_position(piece, -1, +1);
     
-    int step = 1;
+    int possible_square = 0;
     move_direction_t move_direction = east;
     while (move_direction != MAX_DIR)
     {
-        int possible_square = 0;
-        for(ever)
+        const char is_east            = move_direction == east;
+        const char is_north_east      = move_direction == north_east;
+        const char is_south_east      = move_direction == south_east;
+        const char is_north_west      = move_direction == north_west;
+        const char is_west            = move_direction == west;
+        const char is_south_west      = move_direction == south_west;
+
+        const char check_left_castling = (is_east && piece->is_first_move);
+        const char check_right_castling = (is_west && piece->is_first_move);
+        const int max_steps = check_left_castling ? 5 : check_right_castling ? 4 : 2;
+
+        for(unsigned long step = 1; step != max_steps; step++)
         {
             switch (move_direction)
             {
@@ -777,20 +787,13 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             case south_east:    possible_square     = down_left_idx;    break;
             }
 
-            const char is_east            = move_direction == east;
-            const char is_north_east      = move_direction == north_east;
-            const char is_south_east      = move_direction == south_east;
-            const char is_north_west      = move_direction == north_west;
-            const char is_west            = move_direction == west;
-            const char is_south_west      = move_direction == south_west;
+            if (possible_square < 0 || possible_square > (BOARD_SZ - 1))
+                break;
 
             if ((is_east || is_north_east || is_south_east) && chess_piece_is_near_left_bound(piece))
-                    break;
+                break;
 
             if ((is_north_west || is_west || is_south_west) && chess_piece_is_near_right_bound(piece))
-                    break;
-
-            if (possible_square < 0 || possible_square > (BOARD_SZ - 1))
                 break;
 
             cell_t *const current_cell = board->cells[possible_square];
@@ -800,9 +803,28 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
             const chess_piece_t *const current_cell_piece = current_cell->entity;
 
+            if (current_cell->is_occupied && (current_cell_piece->is_white == piece->is_white))
+            {
+                // if we arrived on the last step and the rook is present, king can castle.
+                if ( (step == 4 && check_left_castling) && (current_cell->entity && current_cell->entity->piece_type == rook))
+                {
+                    can_castle = TRUE;
+                    break;
+                }
+
+                if ( (step == 3 && check_right_castling) && (current_cell->entity && current_cell->entity->piece_type == rook))
+                {
+                    can_castle = TRUE;
+                    break;
+                }
+
+                is_castling_blocked = TRUE;
+                break;
+            }
+
             if (!current_cell->is_occupied || (current_cell->is_occupied && ((current_cell_piece->is_white != piece->is_white))))
             {
-                // when the piece currently checked it's a king then this function will be called recursively and we shall avoid that
+                // when the piece currently checked it's a king then this function will be called recursively but we must avoid that
                 if (!simulate && depth < 1)
                 {
                     // only here the king could move but we must check if that cell will turn him into checkmate
@@ -854,45 +876,32 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                             }
                         }
 
-
                         break;
                     }
                 }
                 
-                queue_enqueue(piece->index_queue, possible_square);
-                piece->moves_number++;
-                piece->is_blocked = FALSE;
-                break;
+                if (step == 1)
+                {
+                    queue_enqueue(piece->index_queue, possible_square);
+                    piece->moves_number++;
+                    piece->is_blocked = FALSE;
+                }
             }
+            
+        }
 
-            if (current_cell->is_occupied && (current_cell_piece->is_white == piece->is_white))
-            {
-                is_castling_blocked = TRUE;
-                break;
-            }
+        if (can_castle && !simulate)
+        {
+            int possible_square = is_east ? get_cell_index_by_piece_position(piece, -2, -0) : get_cell_index_by_piece_position(piece, +2, +0);
+
+            queue_enqueue(piece->index_queue, possible_square);
+            piece->moves_number++;
         }
         exit:
 
-        #pragma region CASTLING
-        // the castling must be blocked if among king and rook there is another pawn.
-        if (!simulate)
-        {
-            int left_rook_idx = piece->is_white ? LOWER_LEFT_ROOK_INDEX : UPPER_LEFT_ROOK_INDEX;
-            int right_rook_idx = piece->is_white ? LOWER_RIGHT_ROOK_INDEX : UPPER_RIGHT_ROOK_INDEX;
-
-            char check_long_castling = (move_direction == east && (board->cells[left_rook_idx]->entity && board->cells[left_rook_idx]->entity->piece_type == rook && board->cells[left_rook_idx]->entity->is_first_move));
-            char check_short_castling = (move_direction == west && (board->cells[right_rook_idx]->entity && board->cells[right_rook_idx]->entity->piece_type == rook && board->cells[right_rook_idx]->entity->is_first_move));
-
-            if (!is_castling_blocked && (check_long_castling || check_short_castling) && piece->is_first_move && step < max_castling_steps)
-            {
-                step++;
-                continue;
-            }
-        }
-        #pragma endregion
-        
-        step = 1;
         move_direction++;
+        piece->is_blocked = FALSE;
+        can_castle = FALSE;
     }
 
     depth = 0;

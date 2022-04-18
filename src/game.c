@@ -28,10 +28,13 @@ static Mix_Chunk* castling_fx = NULL;
 static Mix_Chunk* eat_fx = NULL;
 static Mix_Chunk* rankup_fx = NULL;
 static Mix_Chunk* gameover_fx = NULL;
+static Mix_Chunk* error_fx = NULL;
+
+char played_sound = FALSE;
 
 static void recycle_textures(chess_piece_t *piece)
 {
-    for (unsigned long i = 0ul; i < piece->moves_number; ++i)
+    for (unsigned long i = 0ul; i != piece->moves_number; ++i)
     {
         if (!piece->moves || !piece->moves[i])
             continue;
@@ -53,7 +56,7 @@ static void game_handle_pawn_promotion(game_t *game)
         {
             int pos_y = game->current_piece->is_white ? ((game->current_piece->pos_y + CELL_SZ) + (CELL_SZ * i)) : ((game->current_piece->pos_y - CELL_SZ) - (CELL_SZ * i));
             chess_piece_t *promotion_piece = chess_piece_new(types[i], game->current_piece->is_white, FALSE);
-            promotion_piece->set_position(promotion_piece, game->current_piece->pos_x, pos_y);
+            promotion_piece->set_position(promotion_piece, (int)game->current_piece->pos_x, (int)pos_y);
             game->promotion_pieces[i] = promotion_piece;
         }
 
@@ -92,8 +95,7 @@ static void handle_chess_piece_selection(game_t *game)
     if (!game->is_promoting_pawn)
     {
         // give a feedback to player of the current hovered cell
-        color_t hightlight_color = game->current_player->is_white ? GREEN : RED;
-        cell_highlight(game->board->cells[current_cell_index], mouse_x, mouse_y, hightlight_color);
+        cell_highlight(game->board->cells[current_cell_index], (float)mouse_x, (float)mouse_y, SELECTION_BLACK);
     }
 
     if (is_mouse_button_down(events))
@@ -113,8 +115,8 @@ static void handle_chess_piece_selection(game_t *game)
                 {
                     game->current_piece = current_chess_piece;
                     old_piece_cell_index = current_cell_index;
-                    old_pos_x = game->current_piece->pos_x;
-                    old_pos_y = game->current_piece->pos_y;
+                    old_pos_x = (int)game->current_piece->pos_x;
+                    old_pos_y = (int)game->current_piece->pos_y;
 
                     game->current_piece->generate_legal_moves(game->current_piece, game->board);
 
@@ -131,6 +133,14 @@ static void handle_chess_piece_selection(game_t *game)
                         }
                     }
                 }
+                else
+                {
+                    if (!played_sound)
+                    {
+                        Mix_PlayChannel(-1, error_fx, FALSE);
+                        played_sound = !played_sound;
+                    }
+                }
             }
         }
         else
@@ -140,6 +150,8 @@ static void handle_chess_piece_selection(game_t *game)
     }
     else
     {
+        played_sound = FALSE;
+
         if (game->current_piece)
         {
             cell_t *found_cell = find_matching_cell(game, current_cell_index);
@@ -312,7 +324,7 @@ static void draw_legal_moves(game_t *game)
     {
         if (game->current_piece && game->current_piece->moves)
         {
-            for (unsigned long i = 0ul; i < game->current_piece->moves_number; ++i)
+            for (unsigned long i = 0ul; i != game->current_piece->moves_number; ++i)
             {
                 game->current_piece->moves[i]->markers->render(game->current_piece->moves[i]->markers, SDL_ALPHA_OPAQUE / 2, NULL);
             }
@@ -532,6 +544,7 @@ void game_init(game_t *game)
     eat_fx = Mix_LoadWAV("../assets/sounds/eat_pawn.wav");
     rankup_fx = Mix_LoadWAV("../assets/sounds/rankup.wav");
     gameover_fx = Mix_LoadWAV("../assets/sounds/gameover.wav");
+    error_fx = Mix_LoadWAV("../assets/sounds/error.wav");
 }
 
 void game_reset_state(game_t *game)
@@ -581,4 +594,5 @@ void game_destroy(game_t *game)
     Mix_FreeChunk(rankup_fx);
     Mix_FreeChunk(gameover_fx);
     Mix_FreeChunk(castling_fx);
+    Mix_FreeChunk(error_fx);
 }

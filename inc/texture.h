@@ -15,7 +15,7 @@ typedef struct texture{
     char* name;
     void(*render)(struct texture* texture, uint8_t alpha, SDL_Rect* clip);
     void(*set_position)(struct texture* texture, int x, int y);
-    void(*set_size)(struct texture* texture, float width, float height);
+    void(*set_size)(struct texture* texture, int width, int height);
 }texture_t;
 
 texture_t* texture_load_from_file(const char* path, const char use_blending);

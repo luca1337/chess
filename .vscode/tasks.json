@@ -21,7 +21,7 @@
                 "-lSDL2main",
                 "-lSDL2_image",
                 "-lSDL2_ttf",
-                "-lSDL2_mixer.lib",
+                "-lSDL2_mixer",
                 "-g3", // debug symbols max level
                 "-Wall", // enable warnings
                 // "-Wextra", // enable extra warnings
