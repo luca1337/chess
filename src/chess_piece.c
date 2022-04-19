@@ -340,7 +340,7 @@ char get_queen_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     SGLIB_QUEUE_INIT(int, piece->index_queue.index_array, piece->index_queue.i, piece->index_queue.j);
 
     // indice corrente della pedina nella matrice 8x8
-    int piece_index = ((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ);
+    int piece_index = get_cell_index_by_piece_position(piece, 0, 0);
 
     // the queen can move along all the six direction as far as possible until she encounter her ally or an enemy
     // we must check every possible direction starting from the nearest one
@@ -500,7 +500,7 @@ char get_queen_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             else break;
         }
 
-        piece_index = ((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ);
+        piece_index = get_cell_index_by_piece_position(piece, 0, 0);
         step = 1;
         move_direction++;
     }
