@@ -28,7 +28,8 @@
                 // "-Wextra", // enable extra warnings
                 "-Wno-int-conversion", // int to void* conversion
                 "-o",
-                "${workspaceFolder}/bin/chess.exe"
+                "${workspaceFolder}/bin/chess.exe",
+                "${workspaceFolder}/resources/resource.res", // .exe icon
             ],
             "options": {
                 "cwd": "C:\\Program Files\\LLVM\\bin"

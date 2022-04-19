@@ -126,5 +126,5 @@ void board_destroy(board_t* board)
         cell_destroy(board->cells[i]);
     }
 
-    free(board);
+    // free(board);
 }
