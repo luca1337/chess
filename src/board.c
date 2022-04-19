@@ -98,16 +98,15 @@ static void board_init(board_t* board)
     }
 }
 
-board_t *board_new()
+void board_new(board_t* board)
 {
-    board_t *board = (board_t *)calloc(1, sizeof(board_t));
-    CHECK(board, NULL, "Could not allocate memory for board");
+    // board_t *board = (board_t *)calloc(1, sizeof(board_t));
+    // CHECK(board, NULL, "Could not allocate memory for board");
+    memset(board, 0, sizeof(board_t));
 
     board->draw = _draw_board;
 
     board_init(board);
-
-    return board;
 }
 
 void board_restore_state(board_t* board)

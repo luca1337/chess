@@ -34,7 +34,7 @@ struct game_state{
 game_state_t* game_state_new();
 
 struct game{
-    board_t* board;
+    board_t board;
     queue_t* players_queue;
     player_t* current_player;
     chess_piece_t* current_piece;

@@ -11,20 +11,20 @@
 #include <sglib.h>
 
 // GLOBALS poimters
-window_t *window = NULL;
-renderer_t *renderer = NULL;
-events_t *events = NULL;
-render_text_t *gameover_text = NULL;
-render_text_t *restart_text = NULL;
-texture_t *gameover_background = NULL;
+window_t *window                    = NULL;
+renderer_t *renderer                = NULL;
+events_t *events                    = NULL;
+render_text_t *gameover_text        = NULL;
+render_text_t *restart_text         = NULL;
+texture_t *gameover_background      = NULL;
 
-static Mix_Chunk* move_piece_fx = NULL;
-static Mix_Chunk* enpassant_fx = NULL;
-static Mix_Chunk* castling_fx = NULL;
-static Mix_Chunk* eat_fx = NULL;
-static Mix_Chunk* rankup_fx = NULL;
-static Mix_Chunk* gameover_fx = NULL;
-static Mix_Chunk* error_fx = NULL;
+static Mix_Chunk* move_piece_fx     = NULL;
+static Mix_Chunk* enpassant_fx      = NULL;
+static Mix_Chunk* castling_fx       = NULL;
+static Mix_Chunk* eat_fx            = NULL;
+static Mix_Chunk* rankup_fx         = NULL;
+static Mix_Chunk* gameover_fx       = NULL;
+static Mix_Chunk* error_fx          = NULL;
 
 // texture pool allocated on the stack
 texture_pool_t texture_pool;
@@ -33,6 +33,7 @@ int old_pos_x = 0;
 int old_pos_y = 0;
 int old_piece_cell_index = 0;
 char played_sound = FALSE;
+char promotion_pieces_allocated = FALSE;
 
 #define SET_GAMEOVER_MSG(msg, white_player)\
 {\
@@ -64,12 +65,18 @@ static void game_handle_pawn_promotion(game_t *game)
     {
         for (unsigned long i = 0ul; i != PROMOTION_PIECES_COUNT; ++i)
         {
+            // allocate pieces only once
+            if (!game->current_player->has_promotion_pieces)
+            {
+                chess_piece_t *promotion_piece = chess_piece_new(types[i], game->current_piece->is_white, FALSE);
+                game->promotion_pieces[i] = promotion_piece;
+            }
+
             int pos_y = game->current_piece->is_white ? ((game->current_piece->pos_y + CELL_SZ) + (CELL_SZ * i)) : ((game->current_piece->pos_y - CELL_SZ) - (CELL_SZ * i));
-            chess_piece_t *promotion_piece = chess_piece_new(types[i], game->current_piece->is_white, FALSE);
-            promotion_piece->set_position(promotion_piece, (int)game->current_piece->pos_x, (int)pos_y);
-            game->promotion_pieces[i] = promotion_piece;
+            game->promotion_pieces[i]->set_position(game->promotion_pieces[i], (int)game->current_piece->pos_x, (int)pos_y);
         }
 
+        game->current_player->has_promotion_pieces = TRUE;
         game->is_promoting_pawn = TRUE;
     }
 }
@@ -78,7 +85,7 @@ static cell_t *find_matching_cell(game_t *game, size_t cell_index)
 {
     if (game->current_piece && game->current_piece->moves)
     {
-        cell_t *result = game->board->cells[cell_index];
+        cell_t *result = game->board.cells[cell_index];
 
         for (unsigned long i = 0ul; i != game->current_piece->moves_number; ++i)
         {
@@ -105,7 +112,7 @@ static void handle_chess_piece_selection(game_t *game)
     if (!game->is_promoting_pawn)
     {
         // give a feedback to player of the current hovered cell
-        cell_highlight(game->board->cells[current_cell_index], (float)mouse_x, (float)mouse_y, SELECTION_BLACK);
+        cell_highlight(game->board.cells[current_cell_index], (float)mouse_x, (float)mouse_y, SELECTION_BLACK);
     }
 
     if (mouse_state & SDL_BUTTON(LMB_INDEX))
@@ -113,7 +120,7 @@ static void handle_chess_piece_selection(game_t *game)
         if (!game->current_piece)
         {
             // time to query cells within mouse cursor
-            cell_t *current_cell = game->board->cells[current_cell_index];
+            cell_t *current_cell = game->board.cells[current_cell_index];
 
             // get chess piece from cell
             chess_piece_t *current_chess_piece = current_cell->entity;
@@ -128,7 +135,7 @@ static void handle_chess_piece_selection(game_t *game)
                     old_pos_x = game->current_piece->pos_x;
                     old_pos_y = game->current_piece->pos_y;
 
-                    game->current_piece->generate_legal_moves(game->current_piece, game->board);
+                    game->current_piece->generate_legal_moves(game->current_piece, &game->board);
 
                     // check whether the king is in checkmate
                     if (game->current_piece->piece_type == king)
@@ -197,8 +204,8 @@ static void handle_chess_piece_selection(game_t *game)
                 // always check if a pawn can be promoted
                 game_handle_pawn_promotion(game);
 
-                chess_piece_set_entity_null(game->board, old_piece_cell_index);
-                chess_piece_set_entity_cell(game->board, game->current_piece, current_cell_index);
+                chess_piece_set_entity_null(&game->board, old_piece_cell_index);
+                chess_piece_set_entity_cell(&game->board, game->current_piece, current_cell_index);
 
                 // Set current pawn to enpassant
                 game->current_piece->is_enpassant = game->current_piece->piece_type == pawn && game->current_piece->is_first_move && abs(old_pos_y - (int)game->current_piece->pos_y) > CELL_SZ;
@@ -232,15 +239,15 @@ static void handle_chess_piece_selection(game_t *game)
                         // swap rook and king
                         ep_move.swap_index = is_long_castling ? current_cell_index + 1 : current_cell_index - 1;
                         ep_move.rook_index = is_long_castling ? left_rook_index : right_rook_index;
-                        ep_move.target_rook = game->board->cells[ep_move.rook_index]->entity;
-                        ep_move.swap_cell = game->board->cells[ep_move.swap_index];
+                        ep_move.target_rook = game->board.cells[ep_move.rook_index]->entity;
+                        ep_move.swap_cell = game->board.cells[ep_move.swap_index];
 
                         // set rook new cell position
                         ep_move.target_rook->set_position(ep_move.target_rook, ep_move.swap_cell->pos_x, ep_move.swap_cell->pos_y);
 
                         // settle new/previous cells' state
-                        chess_piece_set_entity_cell(game->board, ep_move.target_rook, ep_move.swap_index);
-                        chess_piece_set_entity_null(game->board, ep_move.rook_index);
+                        chess_piece_set_entity_cell(&game->board, ep_move.target_rook, ep_move.swap_index);
+                        chess_piece_set_entity_null(&game->board, ep_move.rook_index);
                     }
                 }
                 #pragma endregion
@@ -249,13 +256,13 @@ static void handle_chess_piece_selection(game_t *game)
                 if (game->current_piece->piece_type == pawn)
                 {
                     int index = game->current_piece->is_white ? current_cell_index + CELLS_PER_ROW : current_cell_index - CELLS_PER_ROW;
-                    chess_piece_t *enpassant_piece = game->board->cells[index]->entity;
+                    chess_piece_t *enpassant_piece = game->board.cells[index]->entity;
 
                     if (enpassant_piece && enpassant_piece->is_enpassant && enpassant_piece->is_white != game->current_piece->is_white)
                     {
                         Mix_PlayChannel(-1, enpassant_fx, FALSE);
 
-                        chess_piece_set_entity_null(game->board, index);
+                        chess_piece_set_entity_null(&game->board, index);
 
                         SDL_Log("[[ENPASSANT]] from %s team!", player_color);
                         printf("------------------------------------------\n");
@@ -298,11 +305,11 @@ static void handle_chess_piece_selection(game_t *game)
 
         if (game->promoted_piece)
         {
-            cell_t *found_cell = game->board->cells[old_piece_cell_index];
+            cell_t *found_cell = game->board.cells[old_piece_cell_index];
 
             game->promoted_piece->set_position(game->promoted_piece, found_cell->pos_x, found_cell->pos_y);
 
-            chess_piece_set_entity_cell(game->board, game->promoted_piece, old_piece_cell_index);
+            chess_piece_set_entity_cell(&game->board, game->promoted_piece, old_piece_cell_index);
 
             // swap player's turn and enqueue the old player to be ready for the next turn
             queue_enqueue(game->players_queue, game->current_player);
@@ -377,10 +384,6 @@ static void draw_promotion_pieces(game_t *game)
 
                     game->promoted_piece = chess_piece_new(game->promotion_pieces[i]->piece_type, game->promotion_pieces[i]->is_white, TRUE);
                     game->is_promoting_pawn = FALSE;
-                    for (unsigned long promotionPieceIdx = 0; promotionPieceIdx < PROMOTION_PIECES_COUNT; promotionPieceIdx++)
-                    {
-                        SDL_memset(game->promotion_pieces[promotionPieceIdx], 0, sizeof(chess_piece_t));
-                    }
                     break;
                 }
             }
@@ -558,29 +561,29 @@ void game_init(game_t *game)
     }
 
     // Creae board and pieces
-    game->board = board_new();
+    board_new(&game->board);
     game->player_turn_text = text_new("../assets/fonts/Lato-Black.ttf", 14, "> WHITE'S TURN <", TURN);
 
     color_t gameover_background_color = color_create(0, 0, 0, 115);
     gameover_background = texture_create_raw(512, 512, gameover_background_color);
 
     color_t gameover_text_color = color_create(255, 255, 255, 0);
-    gameover_text = text_new("../assets/fonts/Lato-Black.ttf", 28, "---", gameover_text_color);
-    restart_text = text_new("../assets/fonts/Lato-Black.ttf", 28, "PRESS SPACE TO RESTART", gameover_text_color);
+    gameover_text   = text_new("../assets/fonts/Lato-Black.ttf", 28, "---", gameover_text_color);
+    restart_text    = text_new("../assets/fonts/Lato-Black.ttf", 28, "PRESS SPACE TO RESTART", gameover_text_color);
 
     // INIT AUDIO SOUNDS
-    move_piece_fx = Mix_LoadWAV("../assets/sounds/move_piece.wav");
-    enpassant_fx = Mix_LoadWAV("../assets/sounds/enpassant.wav");
-    castling_fx = Mix_LoadWAV("../assets/sounds/castling.wav");
-    eat_fx = Mix_LoadWAV("../assets/sounds/eat_pawn.wav");
-    rankup_fx = Mix_LoadWAV("../assets/sounds/rankup.wav");
-    gameover_fx = Mix_LoadWAV("../assets/sounds/gameover.wav");
-    error_fx = Mix_LoadWAV("../assets/sounds/error.wav");
+    move_piece_fx   = Mix_LoadWAV("../assets/sounds/move_piece.wav");
+    enpassant_fx    = Mix_LoadWAV("../assets/sounds/enpassant.wav");
+    castling_fx     = Mix_LoadWAV("../assets/sounds/castling.wav");
+    eat_fx          = Mix_LoadWAV("../assets/sounds/eat_pawn.wav");
+    rankup_fx       = Mix_LoadWAV("../assets/sounds/rankup.wav");
+    gameover_fx     = Mix_LoadWAV("../assets/sounds/gameover.wav");
+    error_fx        = Mix_LoadWAV("../assets/sounds/error.wav");
 }
 
 void game_reset_state(game_t *game)
 {
-    board_restore_state(game->board);
+    board_restore_state(&game->board);
     scoreboard_reset_state(&game->scoreboard);
 }
 
@@ -591,7 +594,7 @@ void game_update(game_t *game)
         renderer_update_events_and_delta_time(window, renderer);
 
 #pragma region RENDER OBJECTS
-        game->board->draw(game->board);
+        game->board.draw(&game->board);
 
         scoreboard_render(&game->scoreboard);
 
@@ -618,7 +621,7 @@ void game_update(game_t *game)
 
 void game_destroy(game_t *game)
 {
-    board_destroy(game->board);
+    board_destroy(&game->board);
     player_destroy(game->current_player);
     text_destroy(game->player_turn_text);
     scoreboard_destroy(&game->scoreboard);

@@ -30,6 +30,7 @@
 
 #define TEXTURE_POOL_SIZE 32
 #define PIECE_POOL_SIZE 32
+#define PROMOTION_PIECES_POOL_SIZE 4
 
 #define CHECK_IDX_RANGE(x) (x < 0 || x >= BOARD_SZ)
 

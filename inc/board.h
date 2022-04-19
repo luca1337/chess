@@ -23,7 +23,7 @@ typedef struct board{
     void(*draw)(struct board* board);
 }board_t;
 
-board_t* board_new();
+void board_new(board_t* board);
 void board_restore_state(board_t* board);
 void board_destroy(board_t* board);
 
