@@ -32,8 +32,7 @@ texture_pool_t texture_pool;
 int old_pos_x = 0;
 int old_pos_y = 0;
 int old_piece_cell_index = 0;
-char played_sound = FALSE;
-char promotion_pieces_allocated = FALSE;
+char has_played_sound = FALSE;
 
 #define SET_GAMEOVER_MSG(msg, white_player)\
 {\
@@ -65,7 +64,7 @@ static void game_handle_pawn_promotion(game_t *game)
     {
         for (unsigned long i = 0ul; i != PROMOTION_PIECES_COUNT; ++i)
         {
-            // allocate pieces only once
+            // allocate pieces only once per team
             if (!game->current_player->has_promotion_pieces)
             {
                 chess_piece_t *promotion_piece = chess_piece_new(types[i], game->current_piece->is_white, FALSE);
@@ -155,10 +154,10 @@ static void handle_chess_piece_selection(game_t *game)
                 }
                 else
                 {
-                    if (!played_sound)
+                    if (!has_played_sound)
                     {
                         Mix_PlayChannel(-1, error_fx, FALSE);
-                        played_sound = !played_sound;
+                        has_played_sound = !has_played_sound;
                     }
                 }
             }
@@ -170,7 +169,7 @@ static void handle_chess_piece_selection(game_t *game)
     }
     else
     {
-        played_sound = FALSE;
+        has_played_sound = FALSE;
 
         if (game->current_piece)
         {

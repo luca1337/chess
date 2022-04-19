@@ -725,6 +725,18 @@ static char check_king_rescue(chess_piece_t* piece, board_t* board, cell_t* dest
     return FALSE;
 }
 
+static char can_reach_cell(chess_piece_t* piece_to_save, chess_piece_t* enemy_piece, board_t* board, cell_t* destination)
+{
+    if (!piece_to_save->check_checkmate(board, enemy_piece, destination))
+    {
+        piece_to_save->blocked_paths--;
+        piece_to_save->is_blocked = FALSE;
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 {
     // the king can move to adjacent cells in all directions, by one square.
@@ -851,15 +863,13 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                         if (!check_king_rescue(piece, board, current_cell))
                         {
                             // Check if any of remaining friendly chess pieces can rescue the king by reaching the blocking enemy cell
-                            if (check_king_rescue(piece, board, blocking_cell))
+                            if (!check_king_rescue(piece, board, blocking_cell))
                             {
-                                // if we arrived here it doesn't mean that the king is in checkmate yet, because any of our chess piece may not reach the target 
-                                // but they could reach one of the adjacent's target cell and in this way prevent the king from being attacked also we could just 
-                                // not move the king to prevent the checkmate
-
-                                // TODO: implement a check for the adjacent enemy cell to see whether we can reach them to protect the king
-
-                                goto exit;
+                                // Last check: check if the blocking enemy will not reach the king we are safe!
+                                if (!can_reach_cell(piece, blocking_cell->entity, board, board->cells[get_cell_index_by_piece_position(piece, 0, 0)]))
+                                {
+                                    goto exit;
+                                }
                             }
                         }
                         break;
