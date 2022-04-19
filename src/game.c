@@ -8,19 +8,15 @@
 
 #include <SDL_mixer.h>
 
-// GLOBALS
+#include <sglib.h>
+
+// GLOBALS poimters
 window_t *window = NULL;
 renderer_t *renderer = NULL;
 events_t *events = NULL;
-queue_t *texture_queue = NULL;
-
 render_text_t *gameover_text = NULL;
 render_text_t *restart_text = NULL;
 texture_t *gameover_background = NULL;
-
-int old_pos_x = 0;
-int old_pos_y = 0;
-int old_piece_cell_index = 0;
 
 static Mix_Chunk* move_piece_fx = NULL;
 static Mix_Chunk* enpassant_fx = NULL;
@@ -30,6 +26,12 @@ static Mix_Chunk* rankup_fx = NULL;
 static Mix_Chunk* gameover_fx = NULL;
 static Mix_Chunk* error_fx = NULL;
 
+// texture pool allocated on the stack
+texture_pool_t texture_pool;
+
+int old_pos_x = 0;
+int old_pos_y = 0;
+int old_piece_cell_index = 0;
 char played_sound = FALSE;
 
 #define SET_GAMEOVER_MSG(msg, white_player)\
@@ -47,7 +49,7 @@ static void recycle_textures(chess_piece_t *piece)
         if (!piece->moves || !piece->moves[i])
             continue;
 
-        queue_enqueue(texture_queue, piece->moves[i]->markers);
+        SGLIB_QUEUE_ADD(texture_t, texture_pool.textures, texture_pool.textures[texture_pool.i], texture_pool.i, texture_pool.j, TEXTURE_POOL_SIZE);
     }
 }
 
@@ -386,6 +388,8 @@ static void draw_promotion_pieces(game_t *game)
     }
 }
 
+
+
 // SETUP STATE
 
 void state_setup_enter(game_t *game)
@@ -414,7 +418,6 @@ static game_state_t *state_setup_update(game_state_t *gs, game_t *game)
 void state_setup_exit(game_t *game)
 {
 }
-
 
 
 // PLAY STATE
@@ -447,6 +450,7 @@ void state_play_exit(game_t *game)
 {
 }
 
+
 // PROMOTE PAWN STATE
 
 void state_promote_pawn_enter(game_t *game)
@@ -463,6 +467,7 @@ game_state_t *state_promote_pawn_update(game_state_t *gs, game_t *game)
 void state_promote_pawn_exit(game_t *game)
 {
 }
+
 
 // GAMEOVER STATE
 
@@ -507,6 +512,8 @@ void game_init(game_t *game)
     renderer = renderer_new(window);
     events = events_new();
 
+    memset(&texture_pool, 0, sizeof(texture_pool_t));
+
     // Setup FSM
     game_state_t *state_setup = game_state_new();
     state_setup->on_state_enter = state_setup_enter;
@@ -544,10 +551,10 @@ void game_init(game_t *game)
     game->current_state->on_state_enter(game);
 
     // Create texture pool for later use
-    texture_queue = queue_new(TEXTURE_POOL_SIZE, sizeof(texture_t) * TEXTURE_POOL_SIZE);
-    for (unsigned long i = 0ul; i != TEXTURE_POOL_SIZE; ++i)
+    SGLIB_QUEUE_INIT(texture_t, texture_pool.textures, texture_pool.i, texture_pool.j);
+    for (unsigned long i = 0ul; i != TEXTURE_POOL_SIZE - 1; ++i)
     {
-        queue_enqueue(texture_queue, texture_load_from_file("../assets/textures/dot.png", TRUE));
+        SGLIB_QUEUE_ADD(texture_t, texture_pool.textures, *texture_load_from_file("../assets/textures/dot.png", TRUE), texture_pool.i, texture_pool.j, TEXTURE_POOL_SIZE);
     }
 
     // Creae board and pieces
@@ -604,6 +611,9 @@ void game_update(game_t *game)
     game_destroy(game);
     SDL_Quit();
     TTF_Quit();
+    free(window);
+    free(renderer);
+    free(events);
 }
 
 void game_destroy(game_t *game)

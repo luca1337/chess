@@ -8,6 +8,11 @@
 #include "scoreboard.h"
 #include "text.h"
 
+typedef struct texture_pool{
+    texture_t textures[TEXTURE_POOL_SIZE];
+    int i, j;
+}texture_pool_t;
+
 typedef struct{
     int swap_index;
     int rook_index;

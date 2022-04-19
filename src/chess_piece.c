@@ -1,5 +1,6 @@
 #include "chess_piece.h"
 #include "events.h"
+#include "game.h"
 #include "texture.h"
 #include "board.h"
 #include "player.h"
@@ -12,7 +13,7 @@
 #include <sglib.h>
 
 extern events_t *events;
-extern queue_t *texture_queue;
+extern texture_pool_t texture_pool;
 
 const char *white_png_postfix = "_w.png";
 const char *black_png_postfix = "_b.png";
@@ -67,8 +68,10 @@ static void _set_position(struct chess_piece *piece, int x, int y)
 piece_move_t *piece_move_new()
 {
     piece_move_t *move = (piece_move_t *)calloc(1, sizeof(piece_move_t));
-    move->markers = queue_peek(texture_queue);
-    queue_dequeue(texture_queue);
+    printf("before: %i\n", texture_pool.i);
+    move->markers = &SGLIB_QUEUE_FIRST_ELEMENT(texture_t, texture_pool.textures, texture_pool.i, texture_pool.j);
+    SGLIB_QUEUE_DELETE_FIRST(texture_t*, texture_pool.textures, texture_pool.i, texture_pool.j, TEXTURE_POOL_SIZE);
+    printf("after: %i\n", texture_pool.i);
     return move;
 }
 
@@ -144,7 +147,6 @@ char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     // se è la prima volta che muovo la pedina, posso suggerire due caselle in verticale ( solo x muovermi e non x mangiare )
     // invece le caselle in diagonale possono sempre essere suggerite in quanto servono solo per mangiare e non per spostarsi liberamente
     SGLIB_QUEUE_INIT(int, piece->index_queue.index_array, piece->index_queue.i, piece->index_queue.j);
-    // piece->piece->index_queue = queue_new(diagonal_moves_count + vertical_moves_count, sizeof(int) * (diagonal_moves_count + vertical_moves_count));
 
     // vertical squares
     const int first_vert_idx = is_white ? get_cell_index_by_piece_position(piece, -0, -1) : get_cell_index_by_piece_position(piece, +0, +1);
@@ -513,7 +515,7 @@ char get_rook_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     SGLIB_QUEUE_INIT(int, piece->index_queue.index_array, piece->index_queue.i, piece->index_queue.j);
 
     // indice corrente della pedina nella matrice 8x8
-    int piece_index = ((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ);
+    int piece_index = get_cell_index_by_piece_position(piece, 0, 0);
 
     // ROOK can vertically and horizontally on the board, so here we only check those directions
     // East && West are pretty the same, just the index will be swapped as well as North && South
@@ -587,7 +589,7 @@ char get_rook_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
         // reset back the piece index because while checking directions, we increment the index to look
         // and in the end we bring it back (where the chess piece is located)
-        piece_index = ((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ);
+        piece_index = get_cell_index_by_piece_position(piece, 0, 0);
         step = 1;
     }
     
@@ -601,7 +603,7 @@ char get_bishop_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
     SGLIB_QUEUE_INIT(int, piece->index_queue.index_array, piece->index_queue.i, piece->index_queue.j);
 
-    int piece_index = ((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ);
+    int piece_index = get_cell_index_by_piece_position(piece, 0, 0);
 
     const move_direction_t move_directions[4] = { north_east, north_west, south_east, south_west };
 
@@ -692,7 +694,7 @@ char get_bishop_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
             }
         }
 
-        piece_index = ((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ);
+        piece_index = get_cell_index_by_piece_position(piece, 0, 0);
         step = 1;
     }
     
