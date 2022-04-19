@@ -35,7 +35,7 @@ window_t *window_new(unsigned int width, unsigned int height, const char *title)
         return NULL;
     }
 
-    SDL_Surface *window_icon = IMG_Load("../assets/textures/chess.png");
+    SDL_Surface *window_icon = IMG_Load("../assets/textures/chess.comp");
     if (!window_icon)
     {
         SDL_Log("Couldn't load window icon: [%s]", SDL_GetError());

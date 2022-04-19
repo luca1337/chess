@@ -556,7 +556,7 @@ void game_init(game_t *game)
     SGLIB_QUEUE_INIT(texture_t, texture_pool.textures, texture_pool.i, texture_pool.j);
     for (unsigned long i = 0ul; i != TEXTURE_POOL_SIZE - 1; ++i)
     {
-        SGLIB_QUEUE_ADD(texture_t, texture_pool.textures, *texture_load_from_file("../assets/textures/dot.png", TRUE), texture_pool.i, texture_pool.j, TEXTURE_POOL_SIZE);
+        SGLIB_QUEUE_ADD(texture_t, texture_pool.textures, *texture_load_from_file("../assets/textures/dot.comp", TRUE), texture_pool.i, texture_pool.j, TEXTURE_POOL_SIZE);
     }
 
     // Creae board and pieces

@@ -15,8 +15,8 @@
 extern events_t *events;
 extern texture_pool_t texture_pool;
 
-const char *white_png_postfix = "_w.png";
-const char *black_png_postfix = "_b.png";
+const char *white_png_postfix = "_w.comp";
+const char *black_png_postfix = "_b.comp";
 
 unsigned depth = 0;
 
