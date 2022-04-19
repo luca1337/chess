@@ -68,10 +68,8 @@ static void _set_position(struct chess_piece *piece, int x, int y)
 piece_move_t *piece_move_new()
 {
     piece_move_t *move = (piece_move_t *)calloc(1, sizeof(piece_move_t));
-    printf("before: %i\n", texture_pool.i);
     move->markers = &SGLIB_QUEUE_FIRST_ELEMENT(texture_t, texture_pool.textures, texture_pool.i, texture_pool.j);
     SGLIB_QUEUE_DELETE_FIRST(texture_t*, texture_pool.textures, texture_pool.i, texture_pool.j, TEXTURE_POOL_SIZE);
-    printf("after: %i\n", texture_pool.i);
     return move;
 }
 
