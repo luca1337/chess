@@ -4,9 +4,18 @@ This is the Chess game, written in C using SDL for fun as a university project. 
 # How to compile using Visual Studio Code:
 
 > 1) Open the project folder in **_VS Code_**
-> 2) Make sure you installed LLVM for clang and copy the binaries from **SDL** and **SDLImage** those folders are inside **External/**
-> 3) Hit **CTRL + SHIFT + B** to compile it, the task will be called and the output will be generated inside **bin/** folder.
-> 4) F5 to launch with debugger or feel free to run it from it's folder!
+> 2) Make sure you installed LLVM for clang. Oherwise [Download Clang Here](https://releases.llvm.org/download.html)
+> 3) Include paths may not be found until you open a random .c file and wait for the path's scan finishes.
+> 4) Hit **CTRL + SHIFT + B** to compile it, the task will be called and the output will be generated inside **bin/** folder.
+> 5) F5 to launch with debugger or feel free to run it from it's folder!
+
+# Features:
+- Castling: Support castling from both sides (long && short castling
+- Enpassant: Support Enpassant
+- Pawn promotion: Everytime a pawn reaches the opposite, you can choose to promote your pawn.
+
+# Notes:
+I Wrote this code from scratch and i didn't use any kind of graph search algorithm for the king. In some situation that i couldn't test it could be blocked without any available moves.
 
 ----------------------------------------------------------------------------
 
