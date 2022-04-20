@@ -1,7 +1,8 @@
 #include "game.h"
+#include "cell.h"
 #include "events.h"
 #include "scoreboard.h"
-#include "cell.h"
+
 
 #include <stdlib.h>
 #include <string.h>
@@ -11,20 +12,20 @@
 #include <sglib.h>
 
 // GLOBALS poimters
-window_t *window                    = NULL;
-renderer_t *renderer                = NULL;
-events_t *events                    = NULL;
-render_text_t *gameover_text        = NULL;
-render_text_t *restart_text         = NULL;
-texture_t *gameover_background      = NULL;
+window_t *window = NULL;
+renderer_t *renderer = NULL;
+events_t *events = NULL;
+render_text_t *gameover_text = NULL;
+render_text_t *restart_text = NULL;
+texture_t *gameover_background = NULL;
 
-static Mix_Chunk* move_piece_fx     = NULL;
-static Mix_Chunk* enpassant_fx      = NULL;
-static Mix_Chunk* castling_fx       = NULL;
-static Mix_Chunk* eat_fx            = NULL;
-static Mix_Chunk* rankup_fx         = NULL;
-static Mix_Chunk* gameover_fx       = NULL;
-static Mix_Chunk* error_fx          = NULL;
+static Mix_Chunk *move_piece_fx = NULL;
+static Mix_Chunk *enpassant_fx = NULL;
+static Mix_Chunk *castling_fx = NULL;
+static Mix_Chunk *eat_fx = NULL;
+static Mix_Chunk *rankup_fx = NULL;
+static Mix_Chunk *gameover_fx = NULL;
+static Mix_Chunk *error_fx = NULL;
 
 // texture pool allocated on the stack
 texture_pool_t texture_pool;
@@ -34,20 +35,19 @@ int old_pos_y = 0;
 int old_piece_cell_index = 0;
 char has_played_sound = FALSE;
 
-#define SET_GAMEOVER_MSG(msg, white_player)\
-{\
-    char buffer[MAX_BUFFER_SIZE];\
-    SDL_memset(buffer, 0, sizeof(char) * MAX_BUFFER_SIZE);\
-    sprintf_s(buffer, MAX_BUFFER_SIZE, strcat_macro(msg, %s WINS!), white_player ? "WHITE" : "BLACK");\
-    text_update(gameover_text, buffer);\
-}
+#define SET_GAMEOVER_MSG(msg, white_player) \
+    { \
+        char buffer[MAX_BUFFER_SIZE]; \
+        SDL_memset(buffer, 0, sizeof(char) * MAX_BUFFER_SIZE); \
+        sprintf_s(buffer, MAX_BUFFER_SIZE, strcat_macro(msg, % s WINS !), white_player ? "WHITE" : "BLACK"); \
+        text_update(gameover_text, buffer); \
+    }
 
 static void recycle_textures(chess_piece_t *piece)
 {
     for (unsigned long i = 0ul; i != piece->moves_number; ++i)
     {
-        if (!piece->moves || !piece->moves[i])
-            continue;
+        if (!piece->moves || !piece->moves[i]) continue;
 
         SGLIB_QUEUE_ADD(texture_t, texture_pool.textures, texture_pool.textures[texture_pool.i], texture_pool.i, texture_pool.j, TEXTURE_POOL_SIZE);
     }
@@ -55,8 +55,7 @@ static void recycle_textures(chess_piece_t *piece)
 
 static void game_handle_pawn_promotion(game_t *game)
 {
-    if (!game->current_piece || game->current_piece->piece_type != pawn)
-        return;
+    if (!game->current_piece || game->current_piece->piece_type != pawn) return;
 
     piece_type_t types[] = {queen, knight, rook, bishop};
 
@@ -88,10 +87,7 @@ static cell_t *find_matching_cell(game_t *game, size_t cell_index)
 
         for (unsigned long i = 0ul; i != game->current_piece->moves_number; ++i)
         {
-            if (!SDL_memcmp(game->current_piece->moves[i]->possible_cells, result, sizeof(cell_t)))
-            {
-                return result;
-            }
+            if (!SDL_memcmp(game->current_piece->moves[i]->possible_cells, result, sizeof(cell_t))) { return result; }
         }
     }
 
@@ -103,8 +99,7 @@ static void handle_chess_piece_selection(game_t *game)
     int mouse_x, mouse_y;
     Uint32 mouse_state = SDL_GetMouseState(&mouse_x, &mouse_y);
 
-    if (mouse_y >= SCREEN_H)
-        return;
+    if (mouse_y >= SCREEN_H) return;
 
     int current_cell_index = ((mouse_y / BOARD_SZ) * CELLS_PER_ROW) + mouse_x / BOARD_SZ;
 
@@ -216,7 +211,7 @@ static void handle_chess_piece_selection(game_t *game)
 
                 const char *player_color = game->current_player->is_white ? "White" : "Black";
 
-                #pragma region CASTLING
+#pragma region CASTLING
                 enpassant_move_t ep_move;
                 SDL_memset(&ep_move, 0, sizeof(enpassant_move_t));
 
@@ -251,9 +246,9 @@ static void handle_chess_piece_selection(game_t *game)
                         chess_piece_set_entity_null(&game->board, ep_move.rook_index);
                     }
                 }
-                #pragma endregion
+#pragma endregion
 
-                #pragma region ENPASSANT
+#pragma region ENPASSANT
                 if (game->current_piece->piece_type == pawn)
                 {
                     int index = game->current_piece->is_white ? current_cell_index + CELLS_PER_ROW : current_cell_index - CELLS_PER_ROW;
@@ -273,7 +268,7 @@ static void handle_chess_piece_selection(game_t *game)
                         scoreboard_update(&game->scoreboard, game->current_player);
                     }
                 }
-                #pragma endregion
+#pragma endregion
 
                 game->current_piece->is_first_move = FALSE;
 
@@ -415,21 +410,14 @@ void state_setup_enter(game_t *game)
     queue_dequeue(game->players_queue);
 }
 
-static game_state_t *state_setup_update(game_state_t *gs, game_t *game)
-{
-    return *gs->next;
-}
+static game_state_t *state_setup_update(game_state_t *gs, game_t *game) { return *gs->next; }
 
-void state_setup_exit(game_t *game)
-{
-}
+void state_setup_exit(game_t *game) { }
 
 
 // PLAY STATE
 
-void state_play_enter(game_t *game)
-{
-}
+void state_play_enter(game_t *game) { }
 
 game_state_t *state_play_update(game_state_t *gs, game_t *game)
 {
@@ -441,26 +429,19 @@ game_state_t *state_play_update(game_state_t *gs, game_t *game)
     }
 
     // go to promotion pawn state
-    if (game->is_promoting_pawn)
-    {
-        return gs->next[0];
-    }
+    if (game->is_promoting_pawn) { return gs->next[0]; }
 
     handle_chess_piece_selection(game);
 
     return gs;
 }
 
-void state_play_exit(game_t *game)
-{
-}
+void state_play_exit(game_t *game) { }
 
 
 // PROMOTE PAWN STATE
 
-void state_promote_pawn_enter(game_t *game)
-{
-}
+void state_promote_pawn_enter(game_t *game) { }
 
 game_state_t *state_promote_pawn_update(game_state_t *gs, game_t *game)
 {
@@ -469,16 +450,12 @@ game_state_t *state_promote_pawn_update(game_state_t *gs, game_t *game)
     return game->is_promoting_pawn ? gs : gs->next[0];
 }
 
-void state_promote_pawn_exit(game_t *game)
-{
-}
+void state_promote_pawn_exit(game_t *game) { }
 
 
 // GAMEOVER STATE
 
-void state_gameover_enter(game_t *game)
-{
-}
+void state_gameover_enter(game_t *game) { }
 
 game_state_t *state_gameover_update(game_state_t *gs, game_t *game)
 {
@@ -570,17 +547,17 @@ void game_init(game_t *game)
     gameover_background = texture_create_raw(512, 512, gameover_background_color);
 
     color_t gameover_text_color = color_create(255, 255, 255, 0);
-    gameover_text   = text_new("../assets/fonts/Lato-Black.ttf", 28, "---", gameover_text_color);
-    restart_text    = text_new("../assets/fonts/Lato-Black.ttf", 28, "PRESS SPACE TO RESTART", gameover_text_color);
+    gameover_text = text_new("../assets/fonts/Lato-Black.ttf", 28, "---", gameover_text_color);
+    restart_text = text_new("../assets/fonts/Lato-Black.ttf", 28, "PRESS SPACE TO RESTART", gameover_text_color);
 
     // INIT AUDIO SOUNDS
-    move_piece_fx   = Mix_LoadWAV("../assets/sounds/move_piece.wav");
-    enpassant_fx    = Mix_LoadWAV("../assets/sounds/enpassant.wav");
-    castling_fx     = Mix_LoadWAV("../assets/sounds/castling.wav");
-    eat_fx          = Mix_LoadWAV("../assets/sounds/eat_pawn.wav");
-    rankup_fx       = Mix_LoadWAV("../assets/sounds/rankup.wav");
-    gameover_fx     = Mix_LoadWAV("../assets/sounds/gameover.wav");
-    error_fx        = Mix_LoadWAV("../assets/sounds/error.wav");
+    move_piece_fx = Mix_LoadWAV("../assets/sounds/move_piece.wav");
+    enpassant_fx = Mix_LoadWAV("../assets/sounds/enpassant.wav");
+    castling_fx = Mix_LoadWAV("../assets/sounds/castling.wav");
+    eat_fx = Mix_LoadWAV("../assets/sounds/eat_pawn.wav");
+    rankup_fx = Mix_LoadWAV("../assets/sounds/rankup.wav");
+    gameover_fx = Mix_LoadWAV("../assets/sounds/gameover.wav");
+    error_fx = Mix_LoadWAV("../assets/sounds/error.wav");
 }
 
 void game_reset_state(game_t *game)

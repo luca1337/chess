@@ -1,0 +1,19 @@
+# Format Style Options - Created with Clang Power Tools
+---
+BasedOnStyle: WebKit
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterStruct: false
+  AfterControlStatement: true
+  AfterFunction: true
+  BeforeElse: true
+AlignEscapedNewlines: DontAlign
+AlignTrailingComments: true
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: WithoutElse
+BinPackArguments: false
+ColumnLimit: 230
+Cpp11BracedListStyle: true
+DerivePointerAlignment: true
+MaxEmptyLinesToKeep: 3
+SortIncludes: true

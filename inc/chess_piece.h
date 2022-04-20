@@ -1,29 +1,30 @@
 #ifndef CESS_PIECE_H
 #define CESS_PIECE_H
 
-#include "utils.h"
-#include "queue.h"
 #include "private.h"
+#include "queue.h"
+#include "utils.h"
+
 
 typedef struct board board_t;
 typedef struct cell cell_t;
 typedef struct texture texture_t;
 
 // pawn moves
-typedef struct piece_move{
+typedef struct piece_move {
     cell_t* possible_cells;
     texture_t* markers;
-}piece_move_t;
+} piece_move_t;
 
 piece_move_t* piece_move_new();
 void piece_move_destroy(piece_move_t* move);
 
-typedef struct chess_piece_move_data{
+typedef struct chess_piece_move_data {
     int index_array[MAX_QUEUE_SIZE];
     int i, j;
-}chess_piece_move_data_t;
+} chess_piece_move_data_t;
 
-typedef struct chess_piece{
+typedef struct chess_piece {
     piece_type_t piece_type;
     texture_t* chess_texture;
     piece_move_t** moves;
@@ -39,11 +40,11 @@ typedef struct chess_piece{
     char is_blocked;
     chess_piece_move_data_t possible_squares;
     chess_piece_move_data_t index_queue;
-    void(*draw)(struct chess_piece* piece);
-    void(*set_position)(struct chess_piece* piece, int x, int y);
-    char(*generate_legal_moves)(struct chess_piece* piece, board_t* board, char simulate);
-    char(*check_checkmate)(board_t* board, struct chess_piece* piece, cell_t* destination);
-}chess_piece_t;
+    void (*draw)(struct chess_piece* piece);
+    void (*set_position)(struct chess_piece* piece, int x, int y);
+    char (*generate_legal_moves)(struct chess_piece* piece, board_t* board, char simulate);
+    char (*check_checkmate)(board_t* board, struct chess_piece* piece, cell_t* destination);
+} chess_piece_t;
 
 // piece movements
 char get_pawn_legal_moves(chess_piece_t* piece, board_t* board, char simulate);

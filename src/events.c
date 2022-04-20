@@ -1,7 +1,8 @@
 #include "events.h"
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+
 
 events_t* events_new()
 {
@@ -22,17 +23,10 @@ void update_events(events_t* ev, SDL_Event* native_event)
         ev->is_mouse_button_down = 0;
         ev->is_mouse_button_up = 1;
         break;
-    default:
-        break;
+    default: break;
     }
 }
 
-char is_mouse_button_down(events_t* ev)
-{
-    return ev->is_mouse_button_down;
-}
+char is_mouse_button_down(events_t* ev) { return ev->is_mouse_button_down; }
 
-char is_mouse_button_up(events_t* ev)
-{
-    return ev->is_mouse_button_up;
-}
+char is_mouse_button_up(events_t* ev) { return ev->is_mouse_button_up; }

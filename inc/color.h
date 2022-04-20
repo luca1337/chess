@@ -1,12 +1,12 @@
 #ifndef COLOR_H
 #define COLOR_H
 
-typedef struct color{
+typedef struct color {
     unsigned char r;
     unsigned char g;
     unsigned char b;
     unsigned char a;
-}color_t;
+} color_t;
 
 // useless but useful
 color_t color_create(unsigned char r, unsigned char g, unsigned char b, unsigned char a);

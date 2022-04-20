@@ -1,24 +1,24 @@
 #include "cell.h"
+#include "chess_piece.h"
 #include "private.h"
 #include "texture.h"
-#include "chess_piece.h"
+
 
 #include <stdlib.h>
 #include <string.h>
 
 cell_t* previous_cell = NULL;
 
-static void _draw_cell(cell_t *cell)
+static void _draw_cell(cell_t* cell)
 {
-    if (!cell)
-        return;
+    if (!cell) return;
 
     cell->cell_texture->render(cell->cell_texture, 0, NULL);
 }
 
-cell_t *cell_new(vec2_t pos, vec2_t sz, color_t draw_color)
+cell_t* cell_new(vec2_t pos, vec2_t sz, color_t draw_color)
 {
-    cell_t *cell = (cell_t *)calloc(1, sizeof(cell_t));
+    cell_t* cell = (cell_t*)calloc(1, sizeof(cell_t));
     CHECK(cell, NULL, "Couldn't allocate enought bytes for cell struct");
 
     cell->cell_texture = texture_create_raw((uint32_t)sz.xy[0], (uint32_t)sz.xy[1], draw_color);
@@ -35,8 +35,7 @@ void cell_highlight(cell_t* cell, float mouse_x, float mouse_y, color_t color)
 
     cell_t* current_cell = cell;
 
-    if (!current_cell)
-        return;
+    if (!current_cell) return;
 
     if ((mouse_x > current_cell->pos_x && mouse_x < (current_cell->pos_x + CELL_SZ)) && (mouse_y > current_cell->pos_y && (mouse_y < current_cell->pos_y + CELL_SZ)) && !previous_cell)
     {
@@ -52,32 +51,14 @@ void cell_highlight(cell_t* cell, float mouse_x, float mouse_y, color_t color)
     }
 }
 
-char is_cell_upper_bound(cell_t* cell)
-{
-    return cell != NULL && cell->pos_y == 0;
-}
+char is_cell_upper_bound(cell_t* cell) { return cell != NULL && cell->pos_y == 0; }
 
-char is_cell_lower_bound(cell_t* cell)
-{
-    return cell != NULL && cell->pos_y == (SCREEN_H - CELL_SZ);
-}
+char is_cell_lower_bound(cell_t* cell) { return cell != NULL && cell->pos_y == (SCREEN_H - CELL_SZ); }
 
-char is_cell_left_bound(cell_t* cell)
-{
-    return cell != NULL && cell->pos_x == 0;
-}
+char is_cell_left_bound(cell_t* cell) { return cell != NULL && cell->pos_x == 0; }
 
-char is_cell_right_bound(cell_t* cell)
-{
-    return cell != NULL && cell->pos_x == (SCREEN_W - CELL_SZ);
-}
+char is_cell_right_bound(cell_t* cell) { return cell != NULL && cell->pos_x == (SCREEN_W - CELL_SZ); }
 
-void cell_destroy(cell_t* cell)
-{
-    texture_destroy(cell->cell_texture);
-}
+void cell_destroy(cell_t* cell) { texture_destroy(cell->cell_texture); }
 
-void cell_restore_state(cell_t* cell)
-{
-    cell->is_occupied = FALSE;
-}
+void cell_restore_state(cell_t* cell) { cell->is_occupied = FALSE; }

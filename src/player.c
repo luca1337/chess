@@ -3,10 +3,7 @@
 
 #include <stdlib.h>
 
-static const char* _get_team(struct player player)
-{
-    return player.is_white ? "WHITE" : "BLACK";
-}
+static const char* _get_team(struct player player) { return player.is_white ? "WHITE" : "BLACK"; }
 
 player_t* player_new(char is_white)
 {
@@ -17,7 +14,4 @@ player_t* player_new(char is_white)
     return player;
 }
 
-void player_destroy(player_t* player)
-{
-    free(player);
-}
+void player_destroy(player_t* player) { free(player); }

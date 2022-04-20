@@ -1,14 +1,15 @@
 #include "board.h"
-#include "events.h"
-#include "chess_piece.h"
-#include "context.h"
-#include "vec2.h"
 #include "cell.h"
 #include "chess_piece.h"
+#include "context.h"
+#include "events.h"
+#include "vec2.h"
 
-#include <string.h>
-#include <stdlib.h>
+
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 
 #include <Windows.h>
 
@@ -23,10 +24,7 @@ static void _draw_board(struct board *board)
     {
         cell_t *current_cell = board->cells[cellIndex];
 
-        if (current_cell != NULL)
-        {
-            current_cell->draw(current_cell);
-        }
+        if (current_cell != NULL) { current_cell->draw(current_cell); }
     }
 
     // draw pieces
@@ -34,10 +32,7 @@ static void _draw_board(struct board *board)
     {
         chess_piece_t *current_piece = board->cells[chessIndex]->entity;
 
-        if (current_piece != NULL)
-        {
-            current_piece->draw(current_piece);
-        }
+        if (current_piece != NULL) { current_piece->draw(current_piece); }
     }
 }
 
@@ -49,10 +44,10 @@ static void place_chess_piece(board_t *board, unsigned index, vec2_t position, p
     board->cells[index]->is_occupied = TRUE;
 }
 
-static void board_init(board_t* board)
+static void board_init(board_t *board)
 {
     // Note that I didn't use FEN notation to place down cells.
-    // it's something i might want to implement later so that 
+    // it's something i might want to implement later so that
     // i can also connect a chess engine for the AI.
 
     color_t cell_color = color_create(0, 0, 0, 0);
@@ -83,26 +78,26 @@ static void board_init(board_t* board)
             board->cells[cell_index]->pos_x = pos_x;
             board->cells[cell_index]->pos_y = pos_y;
 
-            const int board_matrix_value  = board_matrix[cell_index];
-            const piece_type_t type       = (piece_type_t)board_matrix_value;
-            const char is_upper_board     = (cell_index <= NUM_OF_CHESS_PIECES);
+            const int board_matrix_value = board_matrix[cell_index];
+            const piece_type_t type = (piece_type_t)board_matrix_value;
+            const char is_upper_board = (cell_index <= NUM_OF_CHESS_PIECES);
 
             // place down chess pieces for each of know type
             switch (board_matrix_value)
             {
-            default:                                                                             break;
-            case rook:    place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
-            case knight:  place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
-            case bishop:  place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
-            case queen:   place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
-            case king:    place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
-            case pawn:    place_chess_piece(board, cell_index, position, type, is_upper_board);  break;
+            default: break;
+            case rook: place_chess_piece(board, cell_index, position, type, is_upper_board); break;
+            case knight: place_chess_piece(board, cell_index, position, type, is_upper_board); break;
+            case bishop: place_chess_piece(board, cell_index, position, type, is_upper_board); break;
+            case queen: place_chess_piece(board, cell_index, position, type, is_upper_board); break;
+            case king: place_chess_piece(board, cell_index, position, type, is_upper_board); break;
+            case pawn: place_chess_piece(board, cell_index, position, type, is_upper_board); break;
             }
         }
     }
 }
 
-void board_new(board_t* board)
+void board_new(board_t *board)
 {
     // board_t *board = (board_t *)calloc(1, sizeof(board_t));
     // CHECK(board, NULL, "Could not allocate memory for board");
@@ -113,7 +108,7 @@ void board_new(board_t* board)
     board_init(board);
 }
 
-void board_restore_state(board_t* board)
+void board_restore_state(board_t *board)
 {
     for (unsigned long i = 0; i != BOARD_SZ; ++i)
     {
@@ -123,7 +118,7 @@ void board_restore_state(board_t* board)
     board_init(board);
 }
 
-void board_destroy(board_t* board)
+void board_destroy(board_t *board)
 {
     for (unsigned long i = 0; i != BOARD_SZ; ++i)
     {

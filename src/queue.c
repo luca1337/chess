@@ -1,15 +1,9 @@
 #include "queue.h"
 #include "private.h"
 
-static char is_empty(queue_t* queue)
-{
-    return queue->count == 0;
-}
+static char is_empty(queue_t* queue) { return queue->count == 0; }
 
-static char is_full(queue_t* queue)
-{
-    return queue->count == queue->capacity;
-}
+static char is_full(queue_t* queue) { return queue->count == queue->capacity; }
 
 queue_t* queue_new(size_t size, size_t allocation_size)
 {
@@ -48,7 +42,4 @@ void queue_dequeue(queue_t* queue)
     queue->count--;
 }
 
-void* queue_peek(queue_t* queue)
-{
-    return queue->data[queue->front];
-}
+void* queue_peek(queue_t* queue) { return queue->data[queue->front]; }

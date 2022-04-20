@@ -3,18 +3,10 @@
 
 typedef struct board board_t;
 
-typedef enum piece_type{
-    none = 0,
-    rook,
-    knight,
-    bishop,
-    queen,
-    king,
-    pawn
-} piece_type_t;
+typedef enum piece_type { none = 0, rook, knight, bishop, queen, king, pawn } piece_type_t;
 
 // which direction do we want to move on ?
-typedef enum move_direction{
+typedef enum move_direction {
     east,
     north_east,
     north,
@@ -25,7 +17,7 @@ typedef enum move_direction{
     south_east,
     // ---
     MAX_DIR
-}move_direction_t;
+} move_direction_t;
 
 int get_index_by_mouse_coords();
 

@@ -1,9 +1,10 @@
 #include "texture.h"
 #include "private.h"
 
-#include <string.h>
-#include <stdlib.h>
 #include <Windows.h>
+#include <stdlib.h>
+#include <string.h>
+
 
 // do not change this order
 #define STB_IMAGE_IMPLEMENTATION
@@ -15,13 +16,9 @@ void _render(struct texture *texture, uint8_t alpha, SDL_Rect *clip)
 {
     SDL_Renderer *native_renderer = (SDL_Renderer *)renderer->sdl_renderer;
 
-    if (!texture)
-    {
-        return;
-    }
+    if (!texture) { return; }
 
-    if (alpha > 0)
-        SDL_SetTextureAlphaMod(texture->texture, alpha);
+    if (alpha > 0) SDL_SetTextureAlphaMod(texture->texture, alpha);
 
     SDL_RenderCopy(native_renderer, texture->texture, NULL, &texture->quad);
 }
@@ -40,7 +37,7 @@ void _set_size(struct texture *texture, int width, int height)
 
 texture_t *texture_create_raw(uint32_t width, uint32_t height, color_t color)
 {
-    texture_t *texture = (texture_t*)calloc(1, sizeof(texture_t));
+    texture_t *texture = (texture_t *)calloc(1, sizeof(texture_t));
     CHECK(texture, NULL, "Couldn't allocate memory for struct texture");
     texture->render = _render;
     texture->set_position = _set_position;
@@ -86,7 +83,7 @@ texture_t *texture_create_raw(uint32_t width, uint32_t height, color_t color)
 
 texture_t *texture_load_from_file(const char *path, const char use_blending)
 {
-    texture_t *texture = (texture_t*)calloc(1, sizeof(texture_t));
+    texture_t *texture = (texture_t *)calloc(1, sizeof(texture_t));
     CHECK(texture, NULL, "Couldn't allocate memory for struct texture");
     texture->render = _render;
     texture->set_position = _set_position;
@@ -108,7 +105,7 @@ texture_t *texture_load_from_file(const char *path, const char use_blending)
 
     memset(pixel, 0, width * height * color_channel);
     memcpy(pixel, data, width * height * color_channel);
-   if (use_blending) SDL_SetTextureBlendMode(texture->texture, SDL_BLENDMODE_BLEND);
+    if (use_blending) SDL_SetTextureBlendMode(texture->texture, SDL_BLENDMODE_BLEND);
     SDL_UnlockTexture(texture->texture);
 
     texture->width = width;

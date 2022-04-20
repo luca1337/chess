@@ -1,9 +1,9 @@
 #ifndef VEC_H
 #define VEC_H
 
-typedef struct vec2{
+typedef struct vec2 {
     float xy[2];
-}vec2_t;
+} vec2_t;
 
 vec2_t vec2_create(float, float);
 vec2_t vec2_add(vec2_t, vec2_t);

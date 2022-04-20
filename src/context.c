@@ -3,8 +3,9 @@
 #include "private.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+
 
 #include <SDL.h>
 #include <SDL_image.h>
@@ -36,10 +37,7 @@ window_t *window_new(unsigned int width, unsigned int height, const char *title)
     }
 
     SDL_Surface *window_icon = IMG_Load("../assets/textures/chess.comp");
-    if (!window_icon)
-    {
-        SDL_Log("Couldn't load window icon: [%s]", SDL_GetError());
-    }
+    if (!window_icon) { SDL_Log("Couldn't load window icon: [%s]", SDL_GetError()); }
     SDL_SetWindowIcon((SDL_Window *)win->sdl_window, window_icon);
 
     win->width = width;
@@ -51,10 +49,7 @@ window_t *window_new(unsigned int width, unsigned int height, const char *title)
         return NULL;
     }
 
-    if (Mix_OpenAudio(44000, AUDIO_S32LSB, 2, 4096) != 0)
-    {
-        SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't init SDL_Mixer: %s", Mix_GetError());
-    }
+    if (Mix_OpenAudio(44000, AUDIO_S32LSB, 2, 4096) != 0) { SDL_LogError(SDL_LOG_CATEGORY_APPLICATION, "Couldn't init SDL_Mixer: %s", Mix_GetError()); }
 
     return win;
 }
@@ -83,10 +78,7 @@ void renderer_update_events_and_delta_time(window_t *window, renderer_t *rendere
     SDL_Event ev;
     while (SDL_PollEvent(&ev))
     {
-        if (ev.type == SDL_QUIT)
-        {
-            renderer->is_running = 0;
-        }
+        if (ev.type == SDL_QUIT) { renderer->is_running = 0; }
 
         update_events(events, &ev);
     }
@@ -104,10 +96,7 @@ void renderer_update_events_and_delta_time(window_t *window, renderer_t *rendere
     window->keys = (Uint8 *)SDL_GetKeyboardState(NULL);
 }
 
-void renderer_present(renderer_t *renderer)
-{
-    SDL_RenderPresent((SDL_Renderer *)renderer->sdl_renderer);
-}
+void renderer_present(renderer_t *renderer) { SDL_RenderPresent((SDL_Renderer *)renderer->sdl_renderer); }
 
 void context_destroy(window_t *window, renderer_t *renderer)
 {

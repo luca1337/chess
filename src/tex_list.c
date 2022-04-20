@@ -24,20 +24,20 @@ void tex_list_item_destroy(tex_list_item_t* item)
 tex_list_t* tex_list_new(int* err)
 {
     tex_list_t* list = malloc(sizeof(tex_list_t));
-    memset(list,0, sizeof(*list));
+    memset(list, 0, sizeof(*list));
     return list;
 }
 
 int tex_list_append(tex_list_t* list, void* tex)
 {
-    tex_list_item_t* current = list->head;    
+    tex_list_item_t* current = list->head;
 
-    while(current)
+    while (current)
     {
         texture_t* tx0 = (texture_t*)tex;
         texture_t* tx1 = (texture_t*)current->tex;
 
-        if(!strcmp(tx0->name, tx1->name))
+        if (!strcmp(tx0->name, tx1->name))
         {
             fprintf(stderr, "texture already exists!\n");
             return -1;
@@ -48,7 +48,8 @@ int tex_list_append(tex_list_t* list, void* tex)
 
     tex_list_item_t* item = tex_list_item_new(NULL);
 
-    if(!list->head){
+    if (!list->head)
+    {
         list->head = item;
         list->tail = item;
         item->tex = tex;
@@ -70,11 +71,11 @@ void* tex_list_get(tex_list_t* list, const char* key)
 {
     tex_list_item_t* current = list->head;
     texture_t* tex = NULL;
-    while(current)
+    while (current)
     {
         texture_t* tx = (texture_t*)current->tex;
 
-        if(strcmp(tx->name, key) == 0)
+        if (strcmp(tx->name, key) == 0)
         {
             tex = current->tex;
             return tex;
@@ -89,7 +90,7 @@ void tex_list_destroy(tex_list_t* list)
 {
     tex_list_item_t* current = list->head;
 
-    while(current)
+    while (current)
     {
         tex_list_item_t* next = current->next;
         texture_t* tx = (texture_t*)current->tex;

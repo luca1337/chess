@@ -2,12 +2,13 @@
 #define TEXTURE_MGR_H
 
 #include "context.h"
-#include "texture.h"
 #include "tex_list.h"
+#include "texture.h"
 
-typedef struct texture_mgr{
+
+typedef struct texture_mgr {
     tex_list_t* textures;
-}texture_mgr_t;
+} texture_mgr_t;
 
 texture_mgr_t* texture_mrg_new();
 texture_t* add_texture(texture_mgr_t*, const char* key, const char* path);

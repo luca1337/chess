@@ -5,10 +5,10 @@
 #include "text.h"
 #include "texture.h"
 
-typedef struct scoreboard{ 
+typedef struct scoreboard {
     render_text_t* white_player_score;
     render_text_t* black_player_score;
-}scoreboard_t;
+} scoreboard_t;
 
 void scoreboard_new(scoreboard_t* scoreboard);
 void scoreboard_update(scoreboard_t* scoreboard, player_t* player);

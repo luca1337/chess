@@ -34,14 +34,12 @@ texture_t* add_texture(texture_mgr_t* t_mgr, const char* key, const char* path)
 texture_t* get_texture(texture_mgr_t* mgr, const char* key)
 {
     texture_t* tex = tex_list_get(mgr->textures, key);
-    if(!tex){
+    if (!tex)
+    {
         printf("something went wrong\n");
         return NULL;
     }
     return tex;
 }
 
-void destroy_texture_mgr(texture_mgr_t* mgr)
-{
-    tex_list_destroy(mgr->textures);
-}
+void destroy_texture_mgr(texture_mgr_t* mgr) { tex_list_destroy(mgr->textures); }

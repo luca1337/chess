@@ -19,6 +19,11 @@
         "texture_mgr.h": "c",
         "sdl_ttf.h": "c",
         "text.h": "c",
-        "scoreboard.h": "c"
-    }
+        "scoreboard.h": "c",
+        "tex_list.h": "c",
+        "string.h": "c",
+        "stdio.h": "c"
+    },
+    "editor.formatOnSave": true,
+    "clang-format.style": "file"
 }

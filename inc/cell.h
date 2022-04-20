@@ -1,19 +1,20 @@
 #ifndef CELL_H
 #define CELL_H
 
-#include "vec2.h"
 #include "color.h"
+#include "vec2.h"
+
 
 typedef struct texture texture_t;
 typedef struct chess_piece chess_piece_t;
 
-typedef struct cell{
+typedef struct cell {
     texture_t* cell_texture;
     chess_piece_t* entity;
     char is_occupied;
     int pos_x, pos_y;
-    void(*draw)(struct cell* cell);
-}cell_t;
+    void (*draw)(struct cell* cell);
+} cell_t;
 
 cell_t* cell_new(vec2_t pos, vec2_t sz, color_t);
 void cell_highlight(cell_t* cell, float x, float y, color_t);
