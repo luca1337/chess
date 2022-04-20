@@ -134,7 +134,7 @@ static void handle_chess_piece_selection(game_t *game)
                     old_pos_x = game->current_piece->pos_x;
                     old_pos_y = game->current_piece->pos_y;
 
-                    game->current_piece->generate_legal_moves(game->current_piece, &game->board);
+                    game->current_piece->generate_legal_moves(game->current_piece, &game->board, FALSE);
 
                     // check whether the king is in checkmate
                     if (game->current_piece->piece_type == king)

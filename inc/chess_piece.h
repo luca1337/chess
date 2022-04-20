@@ -40,7 +40,7 @@ typedef struct chess_piece{
     chess_piece_move_data_t index_queue;
     void(*draw)(struct chess_piece* piece);
     void(*set_position)(struct chess_piece* piece, int x, int y);
-    char(*generate_legal_moves)(struct chess_piece* piece, board_t* board);
+    char(*generate_legal_moves)(struct chess_piece* piece, board_t* board, char simulate);
     char(*check_checkmate)(board_t* board, struct chess_piece* piece, cell_t* destination);
 }chess_piece_t;
 

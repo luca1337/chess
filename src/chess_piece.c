@@ -737,6 +737,34 @@ static char can_reach_cell(chess_piece_t* piece_to_save, chess_piece_t* enemy_pi
     return TRUE;
 }
 
+static char check_if_remaining_pieces_can_move(chess_piece_t* piece_family, board_t* board)
+{
+    char result = FALSE;
+
+    for (size_t i = 0; i < BOARD_SZ; i++)
+    {
+        chess_piece_t *piece = board->cells[i]->entity;
+
+        if (!piece)
+            continue;
+        
+        if (piece->is_white != piece_family->is_white)
+            continue;
+        
+        if (piece->is_white == piece_family->is_white && piece->piece_type == king)
+        {
+            continue;
+        }
+
+        if(piece->generate_legal_moves(piece, board, TRUE))
+        {
+            return TRUE;
+        }
+    }
+    
+    return result;
+}
+
 char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 {
     // the king can move to adjacent cells in all directions, by one square.
@@ -903,7 +931,8 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     depth = 0;
 
     // In this case the king will be totally blocked for now and the game is ended
-    if (piece->blocked_paths > 0 && piece->moves_number == 0)
+    char can_piece_still_move = check_if_remaining_pieces_can_move(piece, board);
+    if (piece->blocked_paths > 0 && piece->moves_number == 0 && !can_piece_still_move)
     {
         piece->is_blocked = TRUE;
     }
@@ -911,20 +940,19 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
     return allocate_legal_moves(piece, board, simulate);
 }
 
-char _generate_legal_moves(struct chess_piece *piece, board_t *board)
+char _generate_legal_moves(struct chess_piece *piece, board_t *board, char simulate)
 {
     // Here we just generate legal moves for each known type we picked up with mouse
 
-    const char should_simulate = FALSE;
     switch (piece->piece_type)
     {
     default:        break;
-    case rook:      return get_rook_legal_moves(piece, board, should_simulate);
-    case knight:    return get_knight_legal_moves(piece, board, should_simulate);
-    case bishop:    return get_bishop_legal_moves(piece, board, should_simulate);
-    case queen:     return get_queen_legal_moves(piece, board, should_simulate);
-    case king:      return get_king_legal_moves(piece, board, should_simulate);
-    case pawn:      return get_pawn_legal_moves(piece, board, should_simulate);
+    case rook:      return get_rook_legal_moves(piece, board, simulate);
+    case knight:    return get_knight_legal_moves(piece, board, simulate);
+    case bishop:    return get_bishop_legal_moves(piece, board, simulate);
+    case queen:     return get_queen_legal_moves(piece, board, simulate);
+    case king:      return get_king_legal_moves(piece, board, simulate);
+    case pawn:      return get_pawn_legal_moves(piece, board, simulate);
     }
 
     return FALSE;
