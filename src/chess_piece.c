@@ -898,6 +898,8 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
                                 {
                                     goto exit;
                                 }
+
+                                piece->blocked_paths++;
                             }
                         }
                         break;
@@ -965,7 +967,6 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
     // get_piece_legal_moves it's done.
     const char should_simulate = TRUE;
     const piece_type_t piece_type = piece->piece_type;
-    char should_check = FALSE;
 
     const char* player_color = piece->is_white ? "WHITE" : "BLACK";
 
@@ -1004,24 +1005,22 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
     }
     else
     {
-        should_check = piece->generate_legal_moves(piece, board, should_simulate);
-    }
-
-    if (should_check)
-    {
-        for (unsigned long i = 0ul; i < piece->moves_number; ++i)
+        if (piece->generate_legal_moves(piece, board, should_simulate))
         {
-            if (!SGLIB_QUEUE_IS_EMPTY(int, piece->possible_squares.index_array, piece->possible_squares.i, piece->possible_squares.j))
+            for (unsigned long i = 0ul; i < piece->moves_number; ++i)
             {
-                int index_to_look = SGLIB_QUEUE_FIRST_ELEMENT(int, piece->possible_squares.index_array, piece->possible_squares.i, piece->possible_squares.j);
-                SGLIB_QUEUE_DELETE(int, piece->possible_squares.index_array, piece->possible_squares.i, piece->possible_squares.j, MAX_QUEUE_SIZE);
-                const cell_t *const cell_to_look = board->cells[index_to_look];
-
-                if (!SDL_memcmp(cell_to_look, destination, sizeof(cell_t)))
+                if (!SGLIB_QUEUE_IS_EMPTY(int, piece->possible_squares.index_array, piece->possible_squares.i, piece->possible_squares.j))
                 {
-                    SDL_Log("[[CHECK CHECKMATE]]: [%s] [%s] can move on index: [%i]", player_color, chess_piece_to_string(piece), index_to_look);
-                    result = TRUE;
-                    break;
+                    int index_to_look = SGLIB_QUEUE_FIRST_ELEMENT(int, piece->possible_squares.index_array, piece->possible_squares.i, piece->possible_squares.j);
+                    SGLIB_QUEUE_DELETE(int, piece->possible_squares.index_array, piece->possible_squares.i, piece->possible_squares.j, MAX_QUEUE_SIZE);
+                    const cell_t *const cell_to_look = board->cells[index_to_look];
+
+                    if (!SDL_memcmp(cell_to_look, destination, sizeof(cell_t)))
+                    {
+                        SDL_Log("[[CHECK CHECKMATE]]: [%s] [%s] can move on index: [%i]", player_color, chess_piece_to_string(piece), index_to_look);
+                        result = TRUE;
+                        break;
+                    }
                 }
             }
         }

@@ -127,7 +127,7 @@ static void handle_chess_piece_selection(game_t *game)
             if (current_chess_piece)
             {
                 // just ensure that the current player is the same as the clicked piece
-                if (game->current_player->is_white == current_chess_piece->is_white)
+                if (1)
                 {
                     game->current_piece = current_chess_piece;
                     old_piece_cell_index = current_cell_index;
