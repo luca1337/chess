@@ -1,5 +1,5 @@
 # chess
-This is the Chess game, written in C using SDL for fun as a university project. Actually it still need lot of stuff to become fully playable, but you can still give a shoot and try to play as it is now ;) have fun!
+This is the Chess game, written in C using SDL for fun as a university project.
 
 # How to compile using Visual Studio Code:
 
@@ -10,12 +10,14 @@ This is the Chess game, written in C using SDL for fun as a university project. 
 > 5) F5 to launch with debugger or feel free to run it from it's folder!
 
 # Features:
-- Castling: Support castling from both sides (long && short castling
-- Enpassant: Support Enpassant
-- Pawn promotion: Everytime a pawn reaches the opposite, you can choose to promote your pawn.
+- Castling: Supported Castling from both sides (long && short Castling)
+- Enpassant: Supported.
+- Pawn promotion: Supported: everytime a pawn reaches the opposite side of the board, you can choose to promote your pawn.
 
 # Notes:
-I Wrote this code from scratch and i didn't use any kind of graph search algorithm for the king. In some situation that i couldn't test it could be blocked without any available moves.
+Since i wrote this game from scratch without implementing any kind of special graph search algorithm, The king's Checkmate algorithm may not work properly in some situation that i couldn't test.
+
+Have Fun!
 
 ----------------------------------------------------------------------------
 
