@@ -51,6 +51,10 @@ static void place_chess_piece(board_t *board, unsigned index, vec2_t position, p
 
 static void board_init(board_t* board)
 {
+    // Note that I didn't use FEN notation to place down cells.
+    // it's something i might want to implement later so that 
+    // i can also connect a chess engine for the AI.
+
     color_t cell_color = color_create(0, 0, 0, 0);
 
     // place down board cells
