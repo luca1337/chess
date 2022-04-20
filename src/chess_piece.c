@@ -98,8 +98,7 @@ static char allocate_legal_moves(chess_piece_t *piece, board_t *board, char simu
             SGLIB_QUEUE_ADD(int, piece->possible_squares.index_array, index, piece->possible_squares.i, piece->possible_squares.j, MAX_QUEUE_SIZE);
             SGLIB_QUEUE_DELETE(int, piece->index_queue.index_array, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
         }
-    }
-    else
+    } else
     {
         // TODO: implement memory pool also here. Again, allocating each time this piece of memory is not correct at all.
         piece->moves = (piece_move_t **)calloc(piece->moves_number, sizeof(piece_move_t *));
@@ -187,21 +186,18 @@ char get_pawn_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
                     SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, matrix_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
                     piece->moves_number++;
                     continue;
-                }
-                else
+                } else
                 {
                     continue;
                 }
-            }
-            else // Handle diagonal movements
+            } else // Handle diagonal movements
             {
                 const chess_piece_t *current_cell_piece = current_cell->entity;
 
                 // we cannot move
                 if ((current_cell_piece && (current_cell_piece->is_white == is_white)) || !current_cell_piece) continue;
             }
-        }
-        else
+        } else
         {
             if (current_cell->is_occupied) { break; }
         }
@@ -367,8 +363,7 @@ char get_queen_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
 
                 step++;
                 piece->moves_number++;
-            }
-            else if (move_direction == north_east || move_direction == north_west)
+            } else if (move_direction == north_east || move_direction == north_west)
             {
                 char is_north_east = move_direction == north_east;
                 char is_near_lateral_bounds = is_north_east ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
@@ -404,8 +399,7 @@ char get_queen_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
 
                 step++;
                 piece->moves_number++;
-            }
-            else if (move_direction == north || move_direction == south)
+            } else if (move_direction == north || move_direction == south)
             {
                 char is_north = move_direction == north;
 
@@ -429,8 +423,7 @@ char get_queen_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
 
                 step++;
                 piece->moves_number++;
-            }
-            else if (move_direction == south_west || move_direction == south_east)
+            } else if (move_direction == south_west || move_direction == south_east)
             {
                 char is_south_west = move_direction == south_west;
                 char is_queen_near_lateral_bounds = is_south_west ? chess_piece_is_near_right_bound(piece) : chess_piece_is_near_left_bound(piece);
@@ -466,8 +459,7 @@ char get_queen_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
 
                 piece->moves_number++;
                 step++;
-            }
-            else
+            } else
                 break;
         }
 
@@ -527,8 +519,7 @@ char get_rook_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
                     piece->moves_number++;
                     break;
                 }
-            }
-            else
+            } else
             {
                 char is_north = current_dir == north;
 
@@ -617,8 +608,7 @@ char get_bishop_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
 
                 step++;
                 piece->moves_number++;
-            }
-            else
+            } else
             {
                 char is_south_west = current_dir == south_west;
                 char is_bishop_near_lateral_bounds = is_south_west ? chess_piece_is_near_right_bound(piece) : chess_piece_is_near_left_bound(piece);
@@ -937,8 +927,7 @@ char _check_checkmate(board_t *board, struct chess_piece *piece, cell_t *destina
                 break;
             }
         }
-    }
-    else
+    } else
     {
         if (piece->generate_legal_moves(piece, board, should_simulate))
         {

@@ -146,8 +146,7 @@ static void handle_chess_piece_selection(game_t *game)
                             Mix_PlayChannel(-1, gameover_fx, FALSE);
                         }
                     }
-                }
-                else
+                } else
                 {
                     if (!has_played_sound)
                     {
@@ -156,13 +155,11 @@ static void handle_chess_piece_selection(game_t *game)
                     }
                 }
             }
-        }
-        else
+        } else
         {
             game->current_piece->set_position(game->current_piece, mouse_x - (CELL_SZ / 2), mouse_y - (CELL_SZ / 2));
         }
-    }
-    else
+    } else
     {
         has_played_sound = FALSE;
 
@@ -190,8 +187,7 @@ static void handle_chess_piece_selection(game_t *game)
 
                     game->current_player->score += found_cell->entity->score_value;
                     scoreboard_update(&game->scoreboard, game->current_player);
-                }
-                else
+                } else
                 {
                     // Play sound if cell is found but was not occupied
                     Mix_PlayChannel(-1, move_piece_fx, FALSE);
@@ -283,13 +279,11 @@ static void handle_chess_piece_selection(game_t *game)
 
                     // dequeue old player
                     queue_dequeue(game->players_queue);
-                }
-                else
+                } else
                 {
                     old_piece_cell_index = current_cell_index;
                 }
-            }
-            else
+            } else
             {
                 game->current_piece->set_position(game->current_piece, old_pos_x, old_pos_y);
             }

@@ -6,7 +6,7 @@ BraceWrapping:
   AfterStruct: false
   AfterControlStatement: true
   AfterFunction: true
-  BeforeElse: true
+  BeforeElse: false
 AlignEscapedNewlines: DontAlign
 AlignTrailingComments: true
 AllowShortCaseLabelsOnASingleLine: true
