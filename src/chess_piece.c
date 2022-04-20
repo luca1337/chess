@@ -916,9 +916,9 @@ char get_king_legal_moves(chess_piece_t* piece, board_t* board, char simulate)
 
         if (can_castle && !simulate)
         {
-            int possible_square = is_east ? get_cell_index_by_piece_position(piece, -2, -0) : get_cell_index_by_piece_position(piece, +2, +0);
+            int castle_index = is_east ? get_cell_index_by_piece_position(piece, -2, -0) : get_cell_index_by_piece_position(piece, +2, +0);
 
-            SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, possible_square, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
+            SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, castle_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
             piece->moves_number++;
         }
         exit:
@@ -971,50 +971,42 @@ char _check_checkmate(board_t* board, struct chess_piece* piece, cell_t* destina
 
     char result = FALSE;
 
-    switch (piece_type)
+    // this pawn check can also be done by extending the original get_pawn_moves (like all the others) to avoid code duplication but for now let's leave it like this.
+    if (piece_type == pawn)
     {
-        default: break;
-        case rook:      should_check = get_rook_legal_moves(piece, board, should_simulate); break;
-        case knight:    should_check = get_knight_legal_moves(piece, board, should_simulate); break;
-        case bishop:    should_check = get_bishop_legal_moves(piece, board, should_simulate); break;
-        case queen:     should_check = get_queen_legal_moves(piece, board, should_simulate); break;
-        case king:      should_check = get_king_legal_moves(piece, board, should_simulate); break;
-        case pawn:
+        const int possible_moves_count = 2;
+
+        const int diagonal_left_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -1, -1) : get_cell_index_by_piece_position(piece, -1, +1);
+        const int diagonal_right_idx = piece->is_white ? get_cell_index_by_piece_position(piece, +1, -1) : get_cell_index_by_piece_position(piece, +1, +1);
+        
+        const int possible_moves[] = {
+            diagonal_left_idx,
+            diagonal_right_idx
+        };
+
+        for (unsigned long moveIdx = 0ul; moveIdx != possible_moves_count; ++moveIdx)
         {
-            // probably this pawn check can also be done by extending the original get_pawn_moves to avoid code duplication but for now let's leave it like this.
+            int index_to_look = possible_moves[moveIdx];
+            char skip_lateral_bounds = moveIdx == 0 ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
 
-            const int possible_moves_count = 2;
+            if (index_to_look < 0 || index_to_look > (BOARD_SZ - 1) || skip_lateral_bounds)
+                continue;
 
-            const int diagonal_left_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -1, -1) : get_cell_index_by_piece_position(piece, -1, +1);
-            const int diagonal_right_idx = piece->is_white ? get_cell_index_by_piece_position(piece, +1, -1) : get_cell_index_by_piece_position(piece, +1, +1);
-            
-            const int possible_moves[] = {
-                diagonal_left_idx,
-                diagonal_right_idx
-            };
+            const cell_t *const cell_to_look = board->cells[index_to_look];
 
-
-            for (unsigned long moveIdx = 0ul; moveIdx != possible_moves_count; ++moveIdx)
+            if (!SDL_memcmp(cell_to_look, destination, sizeof(cell_t)))
             {
-                int index_to_look = possible_moves[moveIdx];
-                char skip_lateral_bounds = moveIdx == 0 ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
-
-                if (index_to_look < 0 || index_to_look > (BOARD_SZ - 1) || skip_lateral_bounds)
-                    continue;
-
-                const cell_t *const cell_to_look = board->cells[index_to_look];
-
-                if (!SDL_memcmp(cell_to_look, destination, sizeof(cell_t)))
-                {
-                    SDL_Log("[[CHECK CHECKMATE]]: [%s] [%s] can move on index: [%i]", player_color, chess_piece_to_string(piece), index_to_look);
-                    result = TRUE;
-                    break;
-                }
+                SDL_Log("[[CHECK CHECKMATE]]: [%s] [%s] can move on index: [%i]", player_color, chess_piece_to_string(piece), index_to_look);
+                result = TRUE;
+                break;
             }
-        } 
-        break;
+        }
     }
-    
+    else
+    {
+        should_check = piece->generate_legal_moves(piece, board, should_simulate);
+    }
+
     if (should_check)
     {
         for (unsigned long i = 0ul; i < piece->moves_number; ++i)
