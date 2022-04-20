@@ -182,6 +182,8 @@ static void handle_chess_piece_selection(game_t *game)
 
                 if (found_cell->is_occupied)
                 {
+                    game->current_piece->has_eat_piece = TRUE;
+
                     if (found_cell->entity->piece_type == king)
                     {
                         SET_GAMEOVER_MSG("KING EATEN!", game->current_player->is_white);
@@ -231,7 +233,7 @@ static void handle_chess_piece_selection(game_t *game)
                         // calculate correct indexes:
                         // indexes are hardcoded but we know by the board matrix that those are the same whenever the game start
                         // we also are sure that if we arrive here the left or right rooks are available for the castling because the
-                        // get_king_legal_moves already did this check.
+                        // get_king_legal_moves already did ensures that.
                         const int left_rook_index = game->current_player->is_white ? LOWER_LEFT_ROOK_INDEX : UPPER_LEFT_ROOK_INDEX;
                         const int right_rook_index = game->current_player->is_white ? LOWER_RIGHT_ROOK_INDEX : UPPER_RIGHT_ROOK_INDEX;
 
@@ -257,7 +259,7 @@ static void handle_chess_piece_selection(game_t *game)
                     int index = game->current_piece->is_white ? current_cell_index + CELLS_PER_ROW : current_cell_index - CELLS_PER_ROW;
                     chess_piece_t *enpassant_piece = game->board.cells[index]->entity;
 
-                    if (enpassant_piece && enpassant_piece->is_enpassant && enpassant_piece->is_white != game->current_piece->is_white)
+                    if (enpassant_piece && enpassant_piece->is_enpassant && enpassant_piece->is_white != game->current_piece->is_white && !game->current_piece->has_eat_piece)
                     {
                         Mix_PlayChannel(-1, enpassant_fx, FALSE);
 
@@ -299,6 +301,7 @@ static void handle_chess_piece_selection(game_t *game)
 
             recycle_textures(game->current_piece);
 
+            game->current_piece->has_eat_piece = FALSE;
             game->current_piece = NULL;
         }
 
