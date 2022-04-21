@@ -96,7 +96,7 @@ static char allocate_legal_moves(chess_piece_t *piece, board_t *board, char simu
     {
         SGLIB_QUEUE_INIT(int, piece->possible_squares.index_array, piece->possible_squares.i, piece->possible_squares.j);
 
-        for (unsigned long i = 0ul; i < piece->moves_number; ++i)
+        for (unsigned long i = 0ul; i != piece->moves_number; ++i)
         {
             const int index = SGLIB_QUEUE_FIRST_ELEMENT(int, piece->index_queue.index_array, piece->index_queue.i, piece->index_queue.j);
             SGLIB_QUEUE_ADD(int, piece->possible_squares.index_array, index, piece->possible_squares.i, piece->possible_squares.j, MAX_QUEUE_SIZE);
@@ -104,17 +104,21 @@ static char allocate_legal_moves(chess_piece_t *piece, board_t *board, char simu
         }
     } else
     {
-        // TODO: implement memory pool also here. Again, allocating each time this piece of memory is not correct at all.
-        piece->moves = (piece_move_t **)calloc(piece->moves_number, sizeof(piece_move_t *));
-        CHECK(piece->moves, NULL, "Couldn't allocate memory for piece->moves ");
+        // Clean all moves to be safer
+        for (unsigned long i = 0ul; i != MAX_QUEUE_SIZE; ++i) 
+        { 
+            memset(&piece->moves[i], 0, sizeof(piece_move_t));
+        }
 
-        for (unsigned long i = 0ul; i < piece->moves_number; ++i)
+        // in this case we also allocate memory for possible moves that include markers which are textures.
+        for (unsigned long i = 0ul; i != piece->moves_number; ++i)
         {
             const int index = SGLIB_QUEUE_FIRST_ELEMENT(int, piece->index_queue.index_array, piece->index_queue.i, piece->index_queue.j);
 
-            piece->moves[i] = piece_move_new();
-            piece->moves[i]->possible_cells = board->cells[index];
-            piece->moves[i]->markers->set_position(piece->moves[i]->markers, piece->moves[i]->possible_cells->pos_x, piece->moves[i]->possible_cells->pos_y);
+            piece_move_t move = *piece_move_new();
+            move.possible_cells = board->cells[index];
+            move.markers->set_position(move.markers, move.possible_cells->pos_x, move.possible_cells->pos_y);
+            piece->moves[i] = move;
 
             SGLIB_QUEUE_DELETE(int, piece->index_queue.index_array, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
         }
@@ -719,7 +723,7 @@ char get_king_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
         const int lest_castling_max_steps = 5, right_castling_max_steps = 4, max_king_steps_per_direction = 2;
         const int max_steps = check_left_castling ? lest_castling_max_steps : check_right_castling ? right_castling_max_steps : max_king_steps_per_direction;
 
-        for (unsigned long step = 1; step != max_steps; step++)
+        for (unsigned long step = 1; step != max_steps; ++step)
         {
             switch (move_direction)
             {
@@ -901,7 +905,7 @@ char _check_checkmate(board_t *board, struct chess_piece *piece, cell_t *destina
     {
         if (piece->generate_legal_moves(piece, board, should_simulate))
         {
-            for (unsigned long i = 0ul; i < piece->moves_number; ++i)
+            for (unsigned long i = 0ul; i != piece->moves_number; ++i)
             {
                 if (!SGLIB_QUEUE_IS_EMPTY(int, piece->possible_squares.index_array, piece->possible_squares.i, piece->possible_squares.j))
                 {
@@ -987,11 +991,6 @@ char chess_piece_is_near_right_bound(chess_piece_t *piece) { return piece != NUL
 void chess_piece_destroy(chess_piece_t *piece)
 {
     texture_destroy(piece->chess_texture);
-
-    for (size_t i = 0; i < piece->moves_number; i++)
-    {
-        piece_move_destroy(piece->moves[i]);
-    }
 
     free(piece);
 }

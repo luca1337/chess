@@ -44,7 +44,7 @@ static void recycle_textures(chess_piece_t *piece)
 {
     for (unsigned long i = 0ul; i != piece->moves_number; ++i)
     {
-        if (!piece->moves || !piece->moves[i]) continue;
+        // if (!piece->moves || !piece->moves[i]) continue;
 
         SGLIB_QUEUE_ADD(texture_t, texture_pool.textures, texture_pool.textures[texture_pool.i], texture_pool.i, texture_pool.j, TEXTURE_POOL_SIZE);
     }
@@ -78,13 +78,13 @@ static void game_handle_pawn_promotion(game_t *game)
 
 static cell_t *find_matching_cell(game_t *game, size_t cell_index)
 {
-    if (game->current_piece && game->current_piece->moves)
+    if (game->current_piece)
     {
         cell_t *result = game->board.cells[cell_index];
 
         for (unsigned long i = 0ul; i != game->current_piece->moves_number; ++i)
         {
-            if (!SDL_memcmp(game->current_piece->moves[i]->possible_cells, result, sizeof(cell_t))) { return result; }
+            if (!SDL_memcmp(game->current_piece->moves[i].possible_cells, result, sizeof(cell_t))) { return result; }
         }
     }
 
@@ -340,11 +340,11 @@ static void draw_legal_moves(game_t *game)
 
     if (mask & SDL_BUTTON(LMB_INDEX))
     {
-        if (game->current_piece && game->current_piece->moves)
+        if (game->current_piece)
         {
             for (unsigned long i = 0ul; i != game->current_piece->moves_number; ++i)
             {
-                game->current_piece->moves[i]->markers->render(game->current_piece->moves[i]->markers, SDL_ALPHA_OPAQUE / 2, NULL);
+                game->current_piece->moves[i].markers->render(game->current_piece->moves[i].markers, SDL_ALPHA_OPAQUE / 2, NULL);
             }
         }
     }

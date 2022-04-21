@@ -37,7 +37,7 @@ typedef struct chess_piece_data {
 typedef struct chess_piece {
     piece_type_t piece_type;
     texture_t* chess_texture;
-    piece_move_t** moves;
+    piece_move_t moves[MAX_QUEUE_SIZE];
     chess_piece_data_t piece_data;
     chess_piece_move_data_t possible_squares;
     chess_piece_move_data_t index_queue;
