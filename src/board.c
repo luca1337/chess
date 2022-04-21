@@ -2,7 +2,6 @@
 #include "cell.h"
 #include "chess_piece.h"
 #include "context.h"
-#include "events.h"
 #include "vec2.h"
 
 
@@ -15,7 +14,6 @@
 
 extern renderer_t *renderer;
 extern window_t *window;
-extern events_t *events;
 
 static void _draw_board(struct board *board)
 {

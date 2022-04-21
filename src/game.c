@@ -1,8 +1,6 @@
 #include "game.h"
 #include "cell.h"
-#include "events.h"
 #include "scoreboard.h"
-
 
 #include <stdlib.h>
 #include <string.h>
@@ -14,7 +12,6 @@
 // GLOBALS poimters
 window_t *window = NULL;
 renderer_t *renderer = NULL;
-events_t *events = NULL;
 render_text_t *gameover_text = NULL;
 render_text_t *restart_text = NULL;
 texture_t *gameover_background = NULL;
@@ -339,7 +336,9 @@ game_t *game_new()
 
 static void draw_legal_moves(game_t *game)
 {
-    if (is_mouse_button_down(events))
+    Uint32 mask = SDL_GetMouseState(NULL, NULL);
+
+    if (mask & SDL_BUTTON(LMB_INDEX))
     {
         if (game->current_piece && game->current_piece->moves)
         {
@@ -486,7 +485,6 @@ void game_init(game_t *game)
     // create window, renderer and events
     window = window_new(SCREEN_W, SCREEN_H + CELL_SZ, "Chess-C");
     renderer = renderer_new(window);
-    events = events_new();
 
     memset(&texture_pool, 0, sizeof(texture_pool_t));
 
@@ -589,7 +587,6 @@ void game_update(game_t *game)
     TTF_Quit();
     free(window);
     free(renderer);
-    free(events);
 }
 
 void game_destroy(game_t *game)
@@ -598,6 +595,13 @@ void game_destroy(game_t *game)
     player_destroy(game->current_player);
     text_destroy(game->player_turn_text);
     scoreboard_destroy(&game->scoreboard);
+
+    // free some textures / texts
+    text_destroy(gameover_text);
+    text_destroy(restart_text);
+    texture_destroy(gameover_background);
+
+    // free sound fx
     Mix_FreeChunk(move_piece_fx);
     Mix_FreeChunk(enpassant_fx);
     Mix_FreeChunk(eat_fx);
@@ -605,4 +609,11 @@ void game_destroy(game_t *game)
     Mix_FreeChunk(gameover_fx);
     Mix_FreeChunk(castling_fx);
     Mix_FreeChunk(error_fx);
+
+    // free game states
+    for (unsigned long i = 0ul; i < MAX_GAME_STATES; ++i)
+    {
+        free(game->game_states[i]);
+        // game->game_states[i] = NULL; // don't need since we're quitting the game
+    }
 }

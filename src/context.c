@@ -1,5 +1,4 @@
 #include "context.h"
-#include "events.h"
 #include "private.h"
 
 #include <stdio.h>
@@ -15,8 +14,6 @@
 
 static uint64_t start = 0;
 static uint64_t end = 0;
-
-extern events_t *events;
 
 window_t *window_new(unsigned int width, unsigned int height, const char *title)
 {
@@ -79,8 +76,6 @@ void renderer_update_events_and_delta_time(window_t *window, renderer_t *rendere
     while (SDL_PollEvent(&ev))
     {
         if (ev.type == SDL_QUIT) { renderer->is_running = 0; }
-
-        update_events(events, &ev);
     }
 
     // clear screen and add alpha blending

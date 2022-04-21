@@ -1,7 +1,6 @@
 #include "chess_piece.h"
 #include "board.h"
 #include "cell.h"
-#include "events.h"
 #include "game.h"
 #include "player.h"
 #include "texture.h"
@@ -12,7 +11,6 @@
 
 #include <sglib.h>
 
-extern events_t *events;
 extern texture_pool_t texture_pool;
 
 const char *white_png_postfix = "_w.comp";

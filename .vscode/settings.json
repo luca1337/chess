@@ -22,7 +22,8 @@
         "scoreboard.h": "c",
         "tex_list.h": "c",
         "string.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "sglib.h": "c"
     },
     "editor.formatOnSave": true,
     "clang-format.style": "file"
