@@ -79,6 +79,12 @@ void piece_move_destroy(piece_move_t *move)
 
 static int get_cell_index_by_piece_position(chess_piece_t *piece, int x_offset, int y_offset) { return (((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ) + x_offset) + (y_offset * CELLS_PER_ROW); }
 
+static char is_cell_occupied_by_friendly_piece(cell_t *cell, chess_piece_t *piece) { return (cell->is_occupied && cell->entity->is_white == piece->is_white); }
+
+static char is_cell_occupied_by_enemy_piece(cell_t *cell, chess_piece_t *piece) { return (cell->is_occupied && cell->entity->is_white != piece->is_white); }
+
+static char is_cell_walkable_by_piece(cell_t *cell, chess_piece_t *piece) { return (is_cell_occupied_by_enemy_piece(cell, piece) || !cell->is_occupied); }
+
 static char allocate_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
 {
     // if no moves are available just go out and this pawn cannot move.
@@ -280,25 +286,21 @@ char get_knight_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
             // inside the 8x8 matrix while checking it's possible moves
 
             if (is_south && !(piece->pos_x >= 64)) break;
-
             if (is_north && !(piece->pos_x <= 384)) break;
-
             if ((is_east || is_north_east || is_south_east) && !is_knight_within_left_bound) break;
-
             if ((is_north_west || is_west || is_south_west) && !is_knight_within_right_bound) break;
 
             cell_t *current_cell = board->cells[possible_square];
-            chess_piece_t *current_cell_piece = current_cell->entity;
 
-            if (!current_cell->is_occupied || (current_cell->is_occupied && ((current_cell_piece->is_white != piece->is_white))))
+            if (is_cell_occupied_by_friendly_piece(current_cell, piece)) break;
+
+            if (is_cell_walkable_by_piece(current_cell, piece))
             {
                 // Enqueue the cell index only if this condition is satisfied, that means, this index will be part of legal moves
                 SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, possible_square, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
                 piece->moves_number++;
                 break;
             }
-
-            if (current_cell->is_occupied && (current_cell_piece->is_white == piece->is_white)) break;
         }
 
         move_direction++;
@@ -318,7 +320,7 @@ char get_queen_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
 
     // the queen can move along all the six direction as far as possible until she encounter her ally or an enemy
     // we must check every possible direction starting from the nearest one
-    // This algorithm can be simplified a lot, but for now let's leave it like it is.
+    // This algorithm can be simplified a lot, but i'm too lazy now let's leave it like it is.
 
     // turning from east to sout-east all aorund in a clock-wise order
     move_direction_t move_direction = east;
@@ -339,25 +341,23 @@ char get_queen_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
                 matrix_index = is_east ? (piece_index - step) : (piece_index + step);
 
                 cell_t *current_cell = board->cells[matrix_index];
-                chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
+                char is_cell_near_lateral_bounds = is_east ? is_cell_left_bound(current_cell) : is_cell_right_bound(current_cell);
 
-                char is_current_cell_near_bounds = is_east ? is_cell_left_bound(current_cell) : is_cell_right_bound(current_cell);
+                if (is_cell_occupied_by_friendly_piece(current_cell, piece)) break;
 
-                if (is_current_cell_near_bounds && ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white) || !current_cell->is_occupied))
+                if (is_cell_near_lateral_bounds && is_cell_walkable_by_piece(current_cell, piece))
                 {
                     SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, matrix_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
                     piece->moves_number++;
                     break;
                 }
 
-                if (current_cell->is_occupied && current_cell_piece->is_white != piece->is_white)
+                if (is_cell_occupied_by_enemy_piece(current_cell, piece))
                 {
                     SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, matrix_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
                     piece->moves_number++;
                     break;
                 }
-
-                if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white)) break;
 
                 SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, matrix_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
 
@@ -373,25 +373,23 @@ char get_queen_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
                 if (is_near_lateral_bounds || matrix_index < 0) break;
 
                 cell_t *current_cell = board->cells[matrix_index];
-                chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
-
                 char is_cell_near_lateral_bounds = is_north_east ? is_cell_left_bound(current_cell) : is_cell_right_bound(current_cell);
 
-                if (is_cell_near_lateral_bounds && ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white) || !current_cell->is_occupied))
+                if (is_cell_occupied_by_friendly_piece(current_cell, piece)) break;
+
+                if (is_cell_near_lateral_bounds && is_cell_walkable_by_piece(current_cell, piece))
                 {
                     SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, matrix_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
                     piece->moves_number++;
                     break;
                 }
 
-                if (current_cell->is_occupied && current_cell_piece->is_white != piece->is_white)
+                if (is_cell_occupied_by_enemy_piece(current_cell, piece))
                 {
                     SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, matrix_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
                     piece->moves_number++;
                     break;
                 }
-
-                if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white)) break;
 
                 SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, matrix_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
 
@@ -408,16 +406,15 @@ char get_queen_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
                 if (matrix_index < 0 || matrix_index > (BOARD_SZ - 1)) break;
 
                 cell_t *current_cell = board->cells[matrix_index];
-                chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
 
-                if ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white))
+                if (is_cell_occupied_by_friendly_piece(current_cell, piece)) break;
+
+                if (is_cell_occupied_by_enemy_piece(current_cell, piece))
                 {
                     piece->moves_number++;
                     SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, matrix_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
                     break;
                 }
-
-                if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white)) break;
 
                 SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, matrix_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
 
@@ -433,25 +430,24 @@ char get_queen_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
                 if (is_queen_near_lateral_bounds || matrix_index > (BOARD_SZ - 1)) break;
 
                 cell_t *current_cell = board->cells[matrix_index];
-                chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
 
                 char is_cell_near_lateral_bounds = is_south_west ? is_cell_right_bound(current_cell) : is_cell_left_bound(current_cell);
 
-                if (is_cell_near_lateral_bounds && ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white) || !current_cell->is_occupied))
+                if (is_cell_occupied_by_friendly_piece(current_cell, piece)) break;
+
+                if (is_cell_near_lateral_bounds && is_cell_walkable_by_piece(current_cell, piece))
                 {
                     SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, matrix_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
                     piece->moves_number++;
                     break;
                 }
 
-                if ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white))
+                if (is_cell_occupied_by_enemy_piece(current_cell, piece))
                 {
                     SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, matrix_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
                     piece->moves_number++;
                     break;
                 }
-
-                if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white)) break;
 
                 SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, matrix_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
 
@@ -597,27 +593,27 @@ char get_bishop_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
 
 #pragma region CHECK_IF_CELL_IS AVAILABLE
             cell_t *current_cell = board->cells[cell_index];
-            chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
 
             int north_east_west_index = is_north_east ? is_cell_left_bound(current_cell) : is_cell_right_bound(current_cell);
             int south_east_west_index = is_south_west ? is_cell_right_bound(current_cell) : is_cell_left_bound(current_cell);
             char is_cell_near_lateral_bounds = (is_north_east || is_north_west) ? north_east_west_index : south_east_west_index;
 
-            if (is_cell_near_lateral_bounds && ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white) || !current_cell->is_occupied))
+            // Break when the cell is occupied by friendly piece
+            if (is_cell_occupied_by_friendly_piece(current_cell, piece)) break;
+
+            if (is_cell_near_lateral_bounds && is_cell_walkable_by_piece(current_cell, piece))
             {
                 SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, cell_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
                 piece->moves_number++;
                 break;
             }
 
-            if (current_cell->is_occupied && current_cell_piece->is_white != piece->is_white)
+            if (is_cell_occupied_by_enemy_piece(current_cell, piece))
             {
                 SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, cell_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
                 piece->moves_number++;
                 break;
             }
-
-            if (current_cell->is_occupied && current_cell_piece->is_white == piece->is_white) break;
 
             SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, cell_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
 
@@ -751,9 +747,7 @@ char get_king_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
             // check checkmate: to implement a check checkmate algorithm, we need to check for each piece present on the board
             // if it can occupy one of the hypotetical available cells for the king
 
-            const chess_piece_t *const current_cell_piece = current_cell->entity;
-
-            if (current_cell->is_occupied && (current_cell_piece->is_white == piece->is_white))
+            if (is_cell_occupied_by_friendly_piece(current_cell, piece))
             {
                 // if we arrived on the last step and the rook is present, king can castle.
                 if (((step == 4 && check_left_castling) || (step == 3 && check_right_castling)) && (current_cell->entity && current_cell->entity->piece_type == rook))
@@ -766,7 +760,7 @@ char get_king_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
                 break;
             }
 
-            if (!current_cell->is_occupied || (current_cell->is_occupied && ((current_cell_piece->is_white != piece->is_white))))
+            if (!current_cell->is_occupied || is_cell_occupied_by_enemy_piece(current_cell, piece))
             {
                 // when the piece currently checked it's a king then this function will be called recursively but we must avoid that
                 if (!simulate && depth < 1)
