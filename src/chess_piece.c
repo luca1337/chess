@@ -65,7 +65,7 @@ static void _set_position(struct chess_piece *piece, int x, int y)
 piece_move_t *piece_move_new()
 {
     piece_move_t *move = (piece_move_t *)calloc(1, sizeof(piece_move_t));
-    move->markers = &SGLIB_QUEUE_FIRST_ELEMENT(texture_t, texture_pool.textures, texture_pool.i, texture_pool.j);
+    move->markers = &SGLIB_QUEUE_FIRST_ELEMENT(texture_t, texture_pool.textures, texture_pool.i, texture_pool.j); // get texture from queue without allocating anything
     SGLIB_QUEUE_DELETE_FIRST(texture_t *, texture_pool.textures, texture_pool.i, texture_pool.j, TEXTURE_POOL_SIZE);
     return move;
 }
@@ -563,6 +563,7 @@ char get_bishop_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
 
     int piece_index = get_cell_index_by_piece_position(piece, 0, 0);
 
+    // We move in 4 diagonal directions
     const move_direction_t move_directions[4] = {north_east, north_west, south_east, south_west};
 
     int step = 1;
@@ -572,31 +573,35 @@ char get_bishop_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
         int cell_index = 0;
         for (ever)
         {
-            char is_south_west = current_dir == south_west;
-            char is_north_east = current_dir == north_east;
+            const char is_south_west = current_dir == south_west;
+            const char is_north_west = current_dir == north_west;
+            const char is_north_east = current_dir == north_east;
 
-            if (current_dir == north_east || current_dir == north_west)
+#pragma region CALCULATE_CORRECT_BOARD_INDEX
+            if (is_north_east || is_north_west)
             {
-                char is_near_lateral_bounds = is_north_east ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
+                const char is_near_lateral_bounds = is_north_east ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
 
                 cell_index = is_north_east ? (piece_index - 1) - CELLS_PER_ROW : (piece_index + 1) - CELLS_PER_ROW;
 
                 if (is_near_lateral_bounds || cell_index < 0) break;
             } else
             {
-                char is_bishop_near_lateral_bounds = is_south_west ? chess_piece_is_near_right_bound(piece) : chess_piece_is_near_left_bound(piece);
+                const char is_bishop_near_lateral_bounds = is_south_west ? chess_piece_is_near_right_bound(piece) : chess_piece_is_near_left_bound(piece);
 
                 cell_index = is_south_west ? (piece_index + 1) + CELLS_PER_ROW : (piece_index - 1) + CELLS_PER_ROW;
 
                 if (is_bishop_near_lateral_bounds || cell_index > (BOARD_SZ - 1)) break;
             }
+#pragma endregion
 
+#pragma region CHECK_IF_CELL_IS AVAILABLE
             cell_t *current_cell = board->cells[cell_index];
             chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
 
             int north_east_west_index = is_north_east ? is_cell_left_bound(current_cell) : is_cell_right_bound(current_cell);
             int south_east_west_index = is_south_west ? is_cell_right_bound(current_cell) : is_cell_left_bound(current_cell);
-            char is_cell_near_lateral_bounds = (current_dir == north_east || current_dir == north_west) ? north_east_west_index : south_east_west_index;
+            char is_cell_near_lateral_bounds = (is_north_east || is_north_west) ? north_east_west_index : south_east_west_index;
 
             if (is_cell_near_lateral_bounds && ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white) || !current_cell->is_occupied))
             {
@@ -620,6 +625,7 @@ char get_bishop_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
             step++;
             piece->moves_number++;
         }
+#pragma endregion
 
         piece_index = get_cell_index_by_piece_position(piece, 0, 0);
         step = 1;
@@ -664,9 +670,7 @@ static char can_reach_cell(chess_piece_t *piece_to_save, chess_piece_t *enemy_pi
 
 static char check_if_remaining_pieces_can_move(chess_piece_t *piece_family, board_t *board)
 {
-    char result = FALSE;
-
-    for (size_t i = 0; i < BOARD_SZ; i++)
+    for (unsigned long i = 0; i != BOARD_SZ; ++i)
     {
         chess_piece_t *piece = board->cells[i]->entity;
 
@@ -679,7 +683,7 @@ static char check_if_remaining_pieces_can_move(chess_piece_t *piece_family, boar
         if (piece->generate_legal_moves(piece, board, TRUE)) { return TRUE; }
     }
 
-    return result;
+    return FALSE;
 }
 
 char get_king_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
