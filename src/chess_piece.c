@@ -572,79 +572,53 @@ char get_bishop_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
         int cell_index = 0;
         for (ever)
         {
+            char is_south_west = current_dir == south_west;
+            char is_north_east = current_dir == north_east;
+
             if (current_dir == north_east || current_dir == north_west)
             {
-                char is_north_east = current_dir == north_east;
                 char is_near_lateral_bounds = is_north_east ? chess_piece_is_near_left_bound(piece) : chess_piece_is_near_right_bound(piece);
 
                 cell_index = is_north_east ? (piece_index - 1) - CELLS_PER_ROW : (piece_index + 1) - CELLS_PER_ROW;
 
                 if (is_near_lateral_bounds || cell_index < 0) break;
-
-                cell_t *current_cell = board->cells[cell_index];
-                chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
-
-                char is_cell_near_lateral_bounds = is_north_east ? is_cell_left_bound(current_cell) : is_cell_right_bound(current_cell);
-
-                if (is_cell_near_lateral_bounds && ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white) || !current_cell->is_occupied))
-                {
-                    SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, cell_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
-                    piece->moves_number++;
-                    break;
-                }
-
-                if (current_cell->is_occupied && current_cell_piece->is_white != piece->is_white)
-                {
-                    SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, cell_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
-                    piece->moves_number++;
-                    break;
-                }
-
-                if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white)) break;
-
-                SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, cell_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
-
-                piece_index = cell_index;
-
-                step++;
-                piece->moves_number++;
             } else
             {
-                char is_south_west = current_dir == south_west;
                 char is_bishop_near_lateral_bounds = is_south_west ? chess_piece_is_near_right_bound(piece) : chess_piece_is_near_left_bound(piece);
 
                 cell_index = is_south_west ? (piece_index + 1) + CELLS_PER_ROW : (piece_index - 1) + CELLS_PER_ROW;
 
                 if (is_bishop_near_lateral_bounds || cell_index > (BOARD_SZ - 1)) break;
-
-                cell_t *current_cell = board->cells[cell_index];
-                chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
-
-                char is_cell_near_lateral_bounds = is_south_west ? is_cell_right_bound(current_cell) : is_cell_left_bound(current_cell);
-
-                if (is_cell_near_lateral_bounds && ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white) || !current_cell->is_occupied))
-                {
-                    SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, cell_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
-                    piece->moves_number++;
-                    break;
-                }
-
-                if ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white))
-                {
-                    SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, cell_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
-                    piece->moves_number++;
-                    break;
-                }
-
-                if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white)) break;
-
-                SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, cell_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
-
-                piece_index = cell_index;
-
-                piece->moves_number++;
-                step++;
             }
+
+            cell_t *current_cell = board->cells[cell_index];
+            chess_piece_t *current_cell_piece = (chess_piece_t *)current_cell->entity;
+
+            int north_east_west_index = is_north_east ? is_cell_left_bound(current_cell) : is_cell_right_bound(current_cell);
+            int south_east_west_index = is_south_west ? is_cell_right_bound(current_cell) : is_cell_left_bound(current_cell);
+            char is_cell_near_lateral_bounds = (current_dir == north_east || current_dir == north_west) ? north_east_west_index : south_east_west_index;
+
+            if (is_cell_near_lateral_bounds && ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white) || !current_cell->is_occupied))
+            {
+                SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, cell_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
+                piece->moves_number++;
+                break;
+            }
+
+            if (current_cell->is_occupied && current_cell_piece->is_white != piece->is_white)
+            {
+                SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, cell_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
+                piece->moves_number++;
+                break;
+            }
+
+            if (current_cell->is_occupied && current_cell_piece->is_white == piece->is_white) break;
+
+            SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, cell_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
+
+            piece_index = cell_index;
+            step++;
+            piece->moves_number++;
         }
 
         piece_index = get_cell_index_by_piece_position(piece, 0, 0);
