@@ -5,7 +5,6 @@
 #include "queue.h"
 #include "utils.h"
 
-
 typedef struct board board_t;
 typedef struct cell cell_t;
 typedef struct texture texture_t;
@@ -19,27 +18,33 @@ typedef struct piece_move {
 piece_move_t* piece_move_new();
 void piece_move_destroy(piece_move_t* move);
 
+// move data
 typedef struct chess_piece_move_data {
     int index_array[MAX_QUEUE_SIZE];
     int i, j;
 } chess_piece_move_data_t;
 
-typedef struct chess_piece {
-    piece_type_t piece_type;
-    texture_t* chess_texture;
-    piece_move_t** moves;
-    unsigned long moves_number;
+// base piece data
+typedef struct chess_piece_data {
     char is_white;
     char is_first_move;
     char is_enpassant;
     char is_castling;
     char has_eat_piece;
+    char is_blocked;
+} chess_piece_data_t;
+
+typedef struct chess_piece {
+    piece_type_t piece_type;
+    texture_t* chess_texture;
+    piece_move_t** moves;
+    chess_piece_data_t piece_data;
+    chess_piece_move_data_t possible_squares;
+    chess_piece_move_data_t index_queue;
+    unsigned long moves_number;
     int pos_x, pos_y;
     int score_value;
     int blocked_paths;
-    char is_blocked;
-    chess_piece_move_data_t possible_squares;
-    chess_piece_move_data_t index_queue;
     void (*draw)(struct chess_piece* piece);
     void (*set_position)(struct chess_piece* piece, int x, int y);
     char (*generate_legal_moves)(struct chess_piece* piece, board_t* board, char simulate);

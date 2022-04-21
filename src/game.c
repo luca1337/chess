@@ -66,11 +66,11 @@ static void game_handle_pawn_promotion(game_t *game)
             // allocate pieces only once per team
             if (!game->current_player->has_promotion_pieces)
             {
-                chess_piece_t *promotion_piece = chess_piece_new(types[i], game->current_piece->is_white, FALSE);
+                chess_piece_t *promotion_piece = chess_piece_new(types[i], game->current_piece->piece_data.is_white, FALSE);
                 game->promotion_pieces[i] = promotion_piece;
             }
 
-            int pos_y = game->current_piece->is_white ? ((game->current_piece->pos_y + CELL_SZ) + (CELL_SZ * i)) : ((game->current_piece->pos_y - CELL_SZ) - (CELL_SZ * i));
+            int pos_y = game->current_piece->piece_data.is_white ? ((game->current_piece->pos_y + CELL_SZ) + (CELL_SZ * i)) : ((game->current_piece->pos_y - CELL_SZ) - (CELL_SZ * i));
             game->promotion_pieces[i]->set_position(game->promotion_pieces[i], (int)game->current_piece->pos_x, (int)pos_y);
         }
 
@@ -122,7 +122,7 @@ static void handle_chess_piece_selection(game_t *game)
             if (current_chess_piece)
             {
                 // just ensure that the current player is the same as the clicked piece
-                if (game->current_player->is_white == current_chess_piece->is_white)
+                if (game->current_player->is_white == current_chess_piece->piece_data.is_white)
                 {
                     game->current_piece = current_chess_piece;
                     old_piece_cell_index = current_cell_index;
@@ -134,7 +134,7 @@ static void handle_chess_piece_selection(game_t *game)
                     // check whether the king is in checkmate
                     if (game->current_piece->piece_type == king)
                     {
-                        if (game->current_piece->moves_number == 0 && game->current_piece->is_blocked)
+                        if (game->current_piece->moves_number == 0 && game->current_piece->piece_data.is_blocked)
                         {
                             SDL_Log("King is in CHECKMATE, Game Lost for: %s Team!", game->current_player->is_white ? "White" : "Black");
                             printf("------------------------------------------\n");
@@ -142,7 +142,7 @@ static void handle_chess_piece_selection(game_t *game)
                             SET_GAMEOVER_MSG("KING CHECKMATE!", !game->current_player->is_white);
 
                             game->is_gameover = TRUE;
-                            game->current_piece->is_blocked = FALSE;
+                            game->current_piece->piece_data.is_blocked = FALSE;
                             Mix_PlayChannel(-1, gameover_fx, FALSE);
                         }
                     }
@@ -174,7 +174,7 @@ static void handle_chess_piece_selection(game_t *game)
 
                 if (found_cell->is_occupied)
                 {
-                    game->current_piece->has_eat_piece = TRUE;
+                    game->current_piece->piece_data.has_eat_piece = TRUE;
 
                     if (found_cell->entity->piece_type == king)
                     {
@@ -200,10 +200,10 @@ static void handle_chess_piece_selection(game_t *game)
                 chess_piece_set_entity_cell(&game->board, game->current_piece, current_cell_index);
 
                 // Set current pawn to enpassant
-                game->current_piece->is_enpassant = game->current_piece->piece_type == pawn && game->current_piece->is_first_move && abs(old_pos_y - (int)game->current_piece->pos_y) > CELL_SZ;
+                game->current_piece->piece_data.is_enpassant = game->current_piece->piece_type == pawn && game->current_piece->piece_data.is_first_move && abs(old_pos_y - (int)game->current_piece->pos_y) > CELL_SZ;
 
                 // Set current king on castling
-                game->current_piece->is_castling = game->current_piece->piece_type == king && game->current_piece->is_first_move && abs(old_pos_x - (int)game->current_piece->pos_x) > CELL_SZ;
+                game->current_piece->piece_data.is_castling = game->current_piece->piece_type == king && game->current_piece->piece_data.is_first_move && abs(old_pos_x - (int)game->current_piece->pos_x) > CELL_SZ;
 
                 const char *player_color = game->current_player->is_white ? "White" : "Black";
 
@@ -213,7 +213,7 @@ static void handle_chess_piece_selection(game_t *game)
 
                 if (game->current_piece->piece_type == king)
                 {
-                    if (game->current_piece->is_castling)
+                    if (game->current_piece->piece_data.is_castling)
                     {
                         Mix_PlayChannel(-1, castling_fx, FALSE);
 
@@ -247,10 +247,10 @@ static void handle_chess_piece_selection(game_t *game)
 #pragma region ENPASSANT
                 if (game->current_piece->piece_type == pawn)
                 {
-                    int index = game->current_piece->is_white ? current_cell_index + CELLS_PER_ROW : current_cell_index - CELLS_PER_ROW;
+                    int index = game->current_piece->piece_data.is_white ? current_cell_index + CELLS_PER_ROW : current_cell_index - CELLS_PER_ROW;
                     chess_piece_t *enpassant_piece = game->board.cells[index]->entity;
 
-                    if (enpassant_piece && enpassant_piece->is_enpassant && enpassant_piece->is_white != game->current_piece->is_white && !game->current_piece->has_eat_piece)
+                    if (enpassant_piece && enpassant_piece->piece_data.is_enpassant && enpassant_piece->piece_data.is_white != game->current_piece->piece_data.is_white && !game->current_piece->piece_data.has_eat_piece)
                     {
                         Mix_PlayChannel(-1, enpassant_fx, FALSE);
 
@@ -266,7 +266,7 @@ static void handle_chess_piece_selection(game_t *game)
                 }
 #pragma endregion
 
-                game->current_piece->is_first_move = FALSE;
+                game->current_piece->piece_data.is_first_move = FALSE;
 
                 if (!game->is_promoting_pawn)
                 {
@@ -290,7 +290,7 @@ static void handle_chess_piece_selection(game_t *game)
 
             recycle_textures(game->current_piece);
 
-            game->current_piece->has_eat_piece = FALSE;
+            game->current_piece->piece_data.has_eat_piece = FALSE;
             game->current_piece = NULL;
         }
 
@@ -373,7 +373,7 @@ static void draw_promotion_pieces(game_t *game)
                     // promote pawn
                     Mix_PlayChannel(-1, rankup_fx, FALSE);
 
-                    game->promoted_piece = chess_piece_new(game->promotion_pieces[i]->piece_type, game->promotion_pieces[i]->is_white, TRUE);
+                    game->promoted_piece = chess_piece_new(game->promotion_pieces[i]->piece_type, game->promotion_pieces[i]->piece_data.is_white, TRUE);
                     game->is_promoting_pawn = FALSE;
                     break;
                 }

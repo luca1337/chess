@@ -79,9 +79,9 @@ void piece_move_destroy(piece_move_t *move)
 
 static int get_cell_index_by_piece_position(chess_piece_t *piece, int x_offset, int y_offset) { return (((piece->pos_y / CELL_SZ) * CELLS_PER_ROW) + (piece->pos_x / CELL_SZ) + x_offset) + (y_offset * CELLS_PER_ROW); }
 
-static char is_cell_occupied_by_friendly_piece(cell_t *cell, chess_piece_t *piece) { return (cell->is_occupied && cell->entity->is_white == piece->is_white); }
+static char is_cell_occupied_by_friendly_piece(cell_t *cell, chess_piece_t *piece) { return (cell->is_occupied && cell->entity->piece_data.is_white == piece->piece_data.is_white); }
 
-static char is_cell_occupied_by_enemy_piece(cell_t *cell, chess_piece_t *piece) { return (cell->is_occupied && cell->entity->is_white != piece->is_white); }
+static char is_cell_occupied_by_enemy_piece(cell_t *cell, chess_piece_t *piece) { return (cell->is_occupied && cell->entity->piece_data.is_white != piece->piece_data.is_white); }
 
 static char is_cell_walkable_by_piece(cell_t *cell, chess_piece_t *piece) { return (is_cell_occupied_by_enemy_piece(cell, piece) || !cell->is_occupied); }
 
@@ -130,8 +130,8 @@ char get_pawn_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
     // reset variables
     piece->moves_number = 0;
 
-    const char is_first_move = piece->is_first_move;
-    const char is_white = piece->is_white;
+    const char is_first_move = piece->piece_data.is_first_move;
+    const char is_white = piece->piece_data.is_white;
 
     // matrice in indici verticali
     const int vertical_moves_count = is_first_move ? 2 : 1;
@@ -185,7 +185,7 @@ char get_pawn_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
                 // arrivati qui siamo sicuri che la cella digonale NON sia nulla
                 const chess_piece_t *current_cell_piece = current_cell->entity;
 
-                if (current_cell_piece && (current_cell_piece->is_enpassant && current_cell_piece->is_white != is_white))
+                if (current_cell_piece && (current_cell_piece->piece_data.is_enpassant && current_cell_piece->piece_data.is_white != is_white))
                 {
                     matrix_index = is_white ? matrix_index - CELLS_PER_ROW : matrix_index + CELLS_PER_ROW;
 
@@ -201,7 +201,7 @@ char get_pawn_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
                 const chess_piece_t *current_cell_piece = current_cell->entity;
 
                 // we cannot move
-                if ((current_cell_piece && (current_cell_piece->is_white == is_white)) || !current_cell_piece) continue;
+                if ((current_cell_piece && (current_cell_piece->piece_data.is_white == is_white)) || !current_cell_piece) continue;
             }
         } else
         {
@@ -509,7 +509,7 @@ char get_rook_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
 
                 char is_current_cell_near_bounds = is_east ? is_cell_left_bound(current_cell) : is_cell_right_bound(current_cell);
 
-                if (is_current_cell_near_bounds && ((current_cell->is_occupied && current_cell_piece->is_white != piece->is_white) || !current_cell->is_occupied))
+                if (is_current_cell_near_bounds && ((current_cell->is_occupied && current_cell_piece->piece_data.is_white != piece->piece_data.is_white) || !current_cell->is_occupied))
                 {
                     SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, cell_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
                     piece->moves_number++;
@@ -527,14 +527,14 @@ char get_rook_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
                 current_cell_piece = current_cell->entity;
             }
 
-            if (current_cell->is_occupied && current_cell_piece->is_white != piece->is_white)
+            if (current_cell->is_occupied && current_cell_piece->piece_data.is_white != piece->piece_data.is_white)
             {
                 SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, cell_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
                 piece->moves_number++;
                 break;
             }
 
-            if ((current_cell->is_occupied && current_cell_piece->is_white == piece->is_white)) break;
+            if ((current_cell->is_occupied && current_cell_piece->piece_data.is_white == piece->piece_data.is_white)) break;
 
             SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, cell_index, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
 
@@ -637,14 +637,14 @@ static char check_king_rescue(chess_piece_t *piece, board_t *board, cell_t *dest
         chess_piece_t *friedly_piece = board->cells[cellIdx]->entity;
 
         // When the found piece it's a king (ourselves) ofc we must skip
-        if (friedly_piece && (piece->is_white == friedly_piece->is_white && friedly_piece->piece_type == king)) { continue; }
+        if (friedly_piece && (piece->piece_data.is_white == friedly_piece->piece_data.is_white && friedly_piece->piece_type == king)) { continue; }
 
-        if (!friedly_piece || (friedly_piece && ((piece->is_white != friedly_piece->is_white)))) continue;
+        if (!friedly_piece || (friedly_piece && ((piece->piece_data.is_white != friedly_piece->piece_data.is_white)))) continue;
 
         if (piece->check_checkmate(board, friedly_piece, destination))
         {
             piece->blocked_paths--;
-            piece->is_blocked = FALSE;
+            piece->piece_data.is_blocked = FALSE;
             return TRUE;
         }
     }
@@ -657,7 +657,7 @@ static char can_reach_cell(chess_piece_t *piece_to_save, chess_piece_t *enemy_pi
     if (!piece_to_save->check_checkmate(board, enemy_piece, destination))
     {
         piece_to_save->blocked_paths--;
-        piece_to_save->is_blocked = FALSE;
+        piece_to_save->piece_data.is_blocked = FALSE;
         return FALSE;
     }
 
@@ -672,9 +672,9 @@ static char check_if_remaining_pieces_can_move(chess_piece_t *piece_family, boar
 
         if (!piece) continue;
 
-        if (piece->is_white != piece_family->is_white) continue;
+        if (piece->piece_data.is_white != piece_family->piece_data.is_white) continue;
 
-        if (piece->is_white == piece_family->is_white && piece->piece_type == king) { continue; }
+        if (piece->piece_data.is_white == piece_family->piece_data.is_white && piece->piece_type == king) { continue; }
 
         if (piece->generate_legal_moves(piece, board, TRUE)) { return TRUE; }
     }
@@ -713,10 +713,10 @@ char get_king_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
         const char is_west = move_direction == west;
         const char is_south_west = move_direction == south_west;
 
-        const char check_left_castling = (is_east && piece->is_first_move);
-        const char check_right_castling = (is_west && piece->is_first_move);
+        const char check_left_castling = (is_east && piece->piece_data.is_first_move);
+        const char check_right_castling = (is_west && piece->piece_data.is_first_move);
 
-        // Left castling is is 4 steps but we start from 1 so we count until 5
+        // Left castling is is 4 steps further but we start from 1 so we count until 5
         // same for the right castling (short) is 3 steps but we count until 4
         const int lest_castling_max_steps = 5, right_castling_max_steps = 4, max_king_steps_per_direction = 2;
         const int max_steps = check_left_castling ? lest_castling_max_steps : check_right_castling ? right_castling_max_steps : max_king_steps_per_direction;
@@ -772,9 +772,9 @@ char get_king_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
                     {
                         chess_piece_t *enemy_pc = board->cells[cellIdx]->entity;
 
-                        if (enemy_pc && (piece->is_white != enemy_pc->is_white && enemy_pc->piece_type == king)) { depth++; }
+                        if (enemy_pc && (piece->piece_data.is_white != enemy_pc->piece_data.is_white && enemy_pc->piece_type == king)) { depth++; }
 
-                        if (!enemy_pc || (enemy_pc && ((piece->is_white == enemy_pc->is_white)))) continue;
+                        if (!enemy_pc || (enemy_pc && ((piece->piece_data.is_white == enemy_pc->piece_data.is_white)))) continue;
 
                         // we stop everytime a enemy piece can move in the same cell that the king could move to
                         if (piece->check_checkmate(board, enemy_pc, current_cell))
@@ -784,14 +784,14 @@ char get_king_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
                             // enemy pawn that is threatening the king. if noone can kill that enemy then, the king
                             // totally in checkmate and the game is lost for that team.
                             piece->blocked_paths++;
-                            piece->is_blocked = TRUE;
+                            piece->piece_data.is_blocked = TRUE;
                             is_castling_blocked = TRUE;
                             blocking_cell = board->cells[cellIdx];
                             break;
                         }
                     }
 
-                    if (piece->is_blocked)
+                    if (piece->piece_data.is_blocked)
                     {
                         // the king is blocked, try to rescue him by checking if any of friendly pawn can kill the blocking enemy.
                         // if a pawn can rescue the king it means that he will not have any available move so he's blocked but the game is not ended yet
@@ -815,7 +815,7 @@ char get_king_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
                 {
                     SGLIB_QUEUE_ADD(int, piece->index_queue.index_array, possible_square, piece->index_queue.i, piece->index_queue.j, MAX_QUEUE_SIZE);
                     piece->moves_number++;
-                    piece->is_blocked = FALSE;
+                    piece->piece_data.is_blocked = FALSE;
                 }
             }
         }
@@ -830,7 +830,7 @@ char get_king_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
     exit:
 
         move_direction++;
-        piece->is_blocked = FALSE;
+        piece->piece_data.is_blocked = FALSE;
         can_castle = FALSE;
     }
 
@@ -838,7 +838,7 @@ char get_king_legal_moves(chess_piece_t *piece, board_t *board, char simulate)
 
     // In this case the king will be totally blocked for now and the game is ended
     char can_piece_still_move = check_if_remaining_pieces_can_move(piece, board);
-    if (piece->blocked_paths > 0 && piece->moves_number == 0 && !can_piece_still_move) { piece->is_blocked = TRUE; }
+    if (piece->blocked_paths > 0 && piece->moves_number == 0 && !can_piece_still_move) { piece->piece_data.is_blocked = TRUE; }
 
     return allocate_legal_moves(piece, board, simulate);
 }
@@ -869,7 +869,7 @@ char _check_checkmate(board_t *board, struct chess_piece *piece, cell_t *destina
     const char should_simulate = TRUE;
     const piece_type_t piece_type = piece->piece_type;
 
-    const char *player_color = piece->is_white ? "WHITE" : "BLACK";
+    const char *player_color = piece->piece_data.is_white ? "WHITE" : "BLACK";
 
     char result = FALSE;
 
@@ -878,8 +878,8 @@ char _check_checkmate(board_t *board, struct chess_piece *piece, cell_t *destina
     {
         const int possible_moves_count = 2;
 
-        const int diagonal_left_idx = piece->is_white ? get_cell_index_by_piece_position(piece, -1, -1) : get_cell_index_by_piece_position(piece, -1, +1);
-        const int diagonal_right_idx = piece->is_white ? get_cell_index_by_piece_position(piece, +1, -1) : get_cell_index_by_piece_position(piece, +1, +1);
+        const int diagonal_left_idx = piece->piece_data.is_white ? get_cell_index_by_piece_position(piece, -1, -1) : get_cell_index_by_piece_position(piece, -1, +1);
+        const int diagonal_right_idx = piece->piece_data.is_white ? get_cell_index_by_piece_position(piece, +1, -1) : get_cell_index_by_piece_position(piece, +1, +1);
 
         const int possible_moves[] = {diagonal_left_idx, diagonal_right_idx};
 
@@ -935,8 +935,8 @@ chess_piece_t *chess_piece_new(piece_type_t type, char is_white, const char use_
     piece->set_position = _set_position;
     piece->generate_legal_moves = _generate_legal_moves;
     piece->check_checkmate = _check_checkmate;
-    piece->is_white = is_white;
-    piece->is_first_move = TRUE;
+    piece->piece_data.is_white = is_white;
+    piece->piece_data.is_first_move = TRUE;
     piece->chess_texture = get_chess_texture(type, is_white, use_blending);
 
     // Setup score values for pieces
