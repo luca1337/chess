@@ -12,10 +12,10 @@ This is the Chess game, written in C using SDL for fun as a university project.
 # Features:
 - Castling: Supported Castling from both sides (long && short Castling).
 - Enpassant: Supported.
-- Pawn promotion: Supported: everytime a pawn reaches the opposite side of the board, you can choose to promote it.
+- Pawn promotion: Supported: everytime a pawn reaches the opposite side of the board, you can choose whether you want to promote it.
 
 # Notes:
-Since i wrote this game from scratch without implementing any kind of special graph search algorithm, The king's Checkmate algorithm may not work properly in some situation that i couldn't test.
+Since i wrote this game from scratch without implementing any kind of special graph search algorithm, The king's Checkmate algorithm may not work properly in some situation that i couldn't even test.
 
 Have Fun!
 
