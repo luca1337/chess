@@ -1,4 +1,9 @@
 {
+    "cmake.configureArgs": [
+        "-DCMAKE_TOOLCHAIN_FILE=${workspaceFolder}/vendor/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "-DCMAKE_MAKE_PROGRAM=C:/msys64/mingw64/bin/ninja.exe",
+    ],
+    "cmake.generator": "Ninja",
     "files.associations": {
         "sdl.h": "c",
         "stdlib.h": "c",
@@ -23,8 +28,11 @@
         "tex_list.h": "c",
         "string.h": "c",
         "stdio.h": "c",
-        "sglib.h": "c"
+        "sglib.h": "c",
+        "cell.h": "c",
+        "windows.h": "c",
+        "sdl_image.h": "c"
     },
+    "C_Cpp.errorSquiggles": "enabled",
     "editor.formatOnSave": true,
-    "clang-format.style": "file"
 }

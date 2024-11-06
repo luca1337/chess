@@ -1,0 +1,20 @@
+{
+    "name": "chess",
+    "version": "1.0.0",
+    "dependencies": [
+        "cglm",
+        "sdl2",
+        "sdl2-ttf",
+        "sdl2-image",
+        "glad",
+        {
+            "name": "sdl2-mixer",
+            "features": [
+                "fluidsynth",
+                "libflac",
+                "libmodplug",
+                "wavpack"
+            ]
+        }
+    ]
+}

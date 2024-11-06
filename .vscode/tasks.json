@@ -1,48 +1,27 @@
 {
+    "version": "2.0.0",
     "tasks": [
         {
-            "type": "cppbuild",
-            "label": "C/C++ Build project..",
-            "command": "C:\\Program Files\\LLVM\\bin\\clang.exe",
-            "args": [
-                "${workspaceFolder}/src/*.c",
-                "${workspaceFolder}/src/math/*.c",
-                "-I${workspaceFolder}/inc",
-                "-I${workspaceFolder}/inc/math",
-                "-I${workspaceFolder}/External/SDL/include/",
-                "-L${workspaceFolder}/External/SDL/lib/x64",
-                "-I${workspaceFolder}/External/SDLImage/include",
-                "-L${workspaceFolder}/External/SDLImage/lib/x64",
-                "-I${workspaceFolder}/External/SDL2_ttf/include",
-                "-L${workspaceFolder}/External/SDL2_ttf/lib/x64",
-                "-I${workspaceFolder}/External/SDL2_mixer/include",
-                "-L${workspaceFolder}/External/SDL2_mixer/lib/x64",
-                "-I${workspaceFolder}/External/sglib-1.0.4",
-                "-lSDL2",
-                "-lSDL2main",
-                "-lSDL2_image",
-                "-lSDL2_ttf",
-                "-lSDL2_mixer",
-                "-g3", // debug symbols max level
-                "-Wall", // enable warnings
-                // "-Wextra", // enable extra warnings
-                "-Wno-int-conversion", // int to void* conversion
-                "-o",
-                "${workspaceFolder}/bin/chess.exe",
-                "${workspaceFolder}/resources/resource.res", // .exe icon
+            "type": "cmake",
+            "label": "CMake: clean rebuild",
+            "command": "cleanRebuild",
+            "targets": [
+                "all"
             ],
-            "options": {
-                "cwd": "C:\\Program Files\\LLVM\\bin"
-            },
-            "problemMatcher": [
-                "$gcc"
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "CMake template clean rebuild task"
+        },
+        {
+            "type": "cmake",
+            "label": "CMake: build",
+            "command": "build",
+            "targets": [
+                "all"
             ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "detail": "Attività generata dal debugger."
+            "group": "build",
+            "problemMatcher": [],
+            "detail": "CMake template build task"
         }
-    ],
-    "version": "2.0.0"
+    ]
 }

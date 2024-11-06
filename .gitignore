@@ -1,29 +1,51 @@
+# Prerequisites
+*.d
 
-# Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode
-# Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
 
-### VisualStudioCode ###
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
+# Precompiled Headers
+*.gch
+*.pch
 
-# Local History for Visual Studio Code
-.history/
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
 
-# Built Visual Studio Code Extensions
-*.vsix
+# Fortran module files
+*.mod
+*.smod
 
-### VisualStudioCode Patch ###
-# Ignore all local history of files
-.history
-.ionide
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
 
-# Support for Project snippet scope
-[Bb]in/*
-![Bb]in/.gitkeep
-![Bb]in/*.dll
+# Executables
+*.exe
+*.out
+*.app
 
-# End of https://www.toptal.com/developers/gitignore/api/visualstudiocode
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps
+
+
+out/build
+
+
+
+[Bb][Uu][Ii][Ll][Dd]/
